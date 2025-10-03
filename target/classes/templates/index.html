@@ -2,14 +2,30 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Información de Ficheros</title>
+    <title>Gestión de Ficheros</title>
 </head>
 <body>
-<h1>Explorar Fichero/Directorio</h1>
-<form action="/info" method="post">
-    <label for="ruta">Ruta:</label>
-    <input type="text" id="ruta" name="ruta" size="50" required>
-    <button type="submit">Consultar</button>
-</form>
+    <h1>Gestión de Ficheros</h1>
+
+    <!-- Crear estructura -->
+    <form action="/crearEstructura" method="post">
+        <button type="submit">Crear estructura de directorios</button>
+    </form>
+    <br>
+
+    <!-- Eliminar fichero -->
+    <form action="/eliminar" method="post">
+        <label for="nombre">Nombre del fichero a eliminar:</label>
+        <input type="text" id="nombre" name="nombre" required>
+        <button type="submit">Eliminar fichero</button>
+    </form>
+    <br>
+
+    <!-- Consultar información de ficheros (lo que ya tenías) -->
+    <form action="/info" method="post">
+        <label for="ruta">Ruta completa para ver información:</label>
+        <input type="text" id="ruta" name="ruta" size="50" required>
+        <button type="submit">Consultar</button>
+    </form>
 </body>
 </html>
