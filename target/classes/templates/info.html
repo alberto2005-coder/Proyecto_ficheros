@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado</title>
+</head>
+<body>
+<h1>Información del fichero/directorio</h1>
+
+<div th:if="${fileInfo.exists}">
+    <ul>
+        <li><strong>Nombre:</strong> <span th:text="${fileInfo.name}"></span></li>
+        <li><strong>Ruta:</strong> <span th:text="${fileInfo.path}"></span></li>
+        <li><strong>Ruta absoluta:</strong> <span th:text="${fileInfo.absolutePath}"></span></li>
+        <li><strong>Padre:</strong> <span th:text="${fileInfo.parent}"></span></li>
+        <li><strong>Es fichero:</strong> <span th:text="${fileInfo.file}"></span></li>
+        <li><strong>Es directorio:</strong> <span th:text="${fileInfo.directory}"></span></li>
+        <li><strong>Oculto:</strong> <span th:text="${fileInfo.hidden}"></span></li>
+        <li><strong>Tamaño (bytes):</strong> <span th:text="${fileInfo.length}"></span></li>
+        <li><strong>Última modificación:</strong> <span th:text="${fileInfo.lastModifiedDate}"></span></li>
+        <li><strong>Lectura:</strong> <span th:text="${fileInfo.canRead}"></span></li>
+        <li><strong>Escritura:</strong> <span th:text="${fileInfo.canWrite}"></span></li>
+        <li><strong>Ejecución:</strong> <span th:text="${fileInfo.canExecute}"></span></li>
+    </ul>
+
+    <div th:if="${fileInfo.directory}">
+        <h2>Contenido del directorio:</h2>
+        <ul>
+            <li th:each="item : ${fileInfo.list}" th:text="${item}"></li>
+        </ul>
+    </div>
+</div>
+
+<div th:if="${!fileInfo.exists}">
+    <p style="color:red;">El fichero o directorio no existe.</p>
+</div>
+
+<a href="/">Volver</a>
+</body>
+</html>

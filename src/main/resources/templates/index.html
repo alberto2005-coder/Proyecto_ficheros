@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Información de Ficheros</title>
+</head>
+<body>
+<h1>Explorar Fichero/Directorio</h1>
+<form action="/info" method="post">
+    <label for="ruta">Ruta:</label>
+    <input type="text" id="ruta" name="ruta" size="50" required>
+    <button type="submit">Consultar</button>
+</form>
+</body>
+</html>
