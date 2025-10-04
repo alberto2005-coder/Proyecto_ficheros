@@ -2,39 +2,53 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Resultado</title>
-</head>
+    <title>Información de Ficheros</title>
+    </head>
 <body>
-<h1>Información del fichero/directorio</h1>
+    <h1>Contenido del Directorio</h1>
+    
+    <p th:if="${mensajeError}" style="color: red;" th:text="${mensajeError}"></p>
 
-<div th:if="${fileInfo.exists}">
-    <ul>
-        <li><strong>Nombre:</strong> <span th:text="${fileInfo.name}"></span></li>
-        <li><strong>Ruta:</strong> <span th:text="${fileInfo.path}"></span></li>
-        <li><strong>Ruta absoluta:</strong> <span th:text="${fileInfo.absolutePath}"></span></li>
-        <li><strong>Padre:</strong> <span th:text="${fileInfo.parent}"></span></li>
-        <li><strong>Es fichero:</strong> <span th:text="${fileInfo.file}"></span></li>
-        <li><strong>Es directorio:</strong> <span th:text="${fileInfo.directory}"></span></li>
-        <li><strong>Oculto:</strong> <span th:text="${fileInfo.hidden}"></span></li>
-        <li><strong>Tamaño (bytes):</strong> <span th:text="${fileInfo.length}"></span></li>
-        <li><strong>Última modificación:</strong> <span th:text="${fileInfo.lastModifiedDate}"></span></li>
-        <li><strong>Lectura:</strong> <span th:text="${fileInfo.canRead}"></span></li>
-        <li><strong>Escritura:</strong> <span th:text="${fileInfo.canWrite}"></span></li>
-        <li><strong>Ejecución:</strong> <span th:text="${fileInfo.canExecute}"></span></li>
-    </ul>
+    <p><a th:href="@{/}">← Volver al Formulario de Consulta</a></p>
 
-    <div th:if="${fileInfo.directory}">
-        <h2>Contenido del directorio:</h2>
-        <ul>
-            <li th:each="item : ${fileInfo.list}" th:text="${item}"></li>
+    <div th:if="${elementos}">
+        <h2>Ruta Actual: <span th:text="${rutaActual}"></span></h2>
+        
+        <div th:if="${rutaActual != rutaPadre}">
+            <form th:action="@{/info}" method="post" style="display: inline;">
+                <input type="hidden" name="ruta" th:value="${rutaPadre}" />
+                <button type="submit" style="color: green; border: 1px solid green;">[..] Subir Directorio</button>
+            </form>
+        </div>
+        
+        <ul class="file-list">
+            <li th:each="item : ${elementos}">
+                
+                <div class="file-name">
+                    <span th:if="${item.directory}" style="color: darkblue;">[DIR]</span>
+                    <span th:unless="${item.directory}" style="color: black;">[FILE]</span>
+
+                    <span th:if="${item.directory}">
+                        <form th:action="@{/info}" method="post" style="display: inline;">
+                            <input type="hidden" name="ruta" th:value="${item.absolutePath}" />
+                            <button type="submit" style="background: none; border: none; cursor: pointer; text-decoration: underline; color: darkblue;">
+                                <span th:text="${item.name}">nombre_archivo</span>
+                            </button>
+                        </form>
+                    </span>
+                    <span th:unless="${item.directory}" th:text="${item.name}">nombre_archivo</span>
+                </div>
+
+                <form th:action="@{/eliminar}" method="post" style="display: inline;">
+                    <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                    <button type="submit" 
+                            onclick="return confirm('¿Estás seguro de eliminar ' + event.target.form.elements['rutaCompleta'].value + '?');"
+                            style="color: white; background-color: red; border: none; padding: 5px 10px; cursor: pointer;">
+                        ❌ Eliminar
+                    </button>
+                </form>
+            </li>
         </ul>
     </div>
-</div>
-
-<div th:if="${!fileInfo.exists}">
-    <p style="color:red;">El fichero o directorio no existe.</p>
-</div>
-
-<a href="/">Volver</a>
 </body>
 </html>
