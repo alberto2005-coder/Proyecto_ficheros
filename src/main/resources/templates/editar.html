@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Editar: ' + ${nombreArchivo}"></title>
+    <style>
+        textarea {
+            width: 90%;
+            height: 500px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Editor de Archivo</h1>
+    <h2 th:text="${nombreArchivo}">Nombre del Archivo</h2>
+    <p>Ruta: <span th:text="${rutaCompleta}"></span></p>
+
+    <form th:action="@{/guardarEdicion}" method="post">
+        <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
+
+        <textarea name="contenido" id="contenido" th:text="${contenido}"></textarea>
+        
+        <br>
+        <button type="submit" style="background-color: darkgreen; color: white; padding: 10px 20px; margin-top: 10px;">💾 Guardar Cambios</button>
+    </form>
+
+    <hr>
+    
+    <form th:action="@{/info}" method="post" style="display: inline;">
+        <input type="hidden" name="ruta" th:value="${rutaDirectorioPadre}" /> 
+        <button type="submit" style="background-color: gray; color: white; padding: 10px 20px;">← Cancelar y Volver</button>
+    </form>
+</body>
+</html>

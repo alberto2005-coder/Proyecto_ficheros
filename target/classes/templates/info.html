@@ -15,7 +15,6 @@
     <div th:if="${elementos}">
         <h2>Ruta Actual: <span th:text="${rutaActual}"></span></h2>
 
-        <!-- 🔹 Formulario para crear nuevo archivo -->
         <form th:action="@{/crearArchivo}" method="post" style="margin-bottom: 20px;">
             <input type="hidden" name="ruta" th:value="${rutaActual}" />
             <label for="nombreArchivo">Nuevo archivo:</label>
@@ -47,7 +46,17 @@
                     <span th:unless="${item.directory}" th:text="${item.name}">nombre_archivo</span>
                 </div>
 
-                <form th:action="@{/eliminar}" method="post" style="display: inline;">
+                <span th:unless="${item.directory}">
+                    <form th:action="@{/editar}" method="get" style="display: inline; margin-left: 10px;">
+                        <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                        <button type="submit"
+                                style="color: black; background-color: yellow; border: none; padding: 5px 10px; cursor: pointer;">
+                            ✏️ Editar
+                        </button>
+                    </form>
+                </span>
+
+                <form th:action="@{/eliminar}" method="post" style="display: inline; margin-left: 10px;">
                     <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                     <button type="submit"
                             onclick="return confirm('¿Estás seguro de eliminar ' + event.target.form.elements['rutaCompleta'].value + '?');"
