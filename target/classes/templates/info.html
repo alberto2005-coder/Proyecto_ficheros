@@ -3,27 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <title>Información de Ficheros</title>
-    </head>
+</head>
 <body>
     <h1>Contenido del Directorio</h1>
-    
+
     <p th:if="${mensajeError}" style="color: red;" th:text="${mensajeError}"></p>
+    <p th:if="${mensajeExito}" style="color: green;" th:text="${mensajeExito}"></p>
 
     <p><a th:href="@{/}">← Volver al Formulario de Consulta</a></p>
 
     <div th:if="${elementos}">
         <h2>Ruta Actual: <span th:text="${rutaActual}"></span></h2>
-        
+
+        <!-- 🔹 Formulario para crear nuevo archivo -->
+        <form th:action="@{/crearArchivo}" method="post" style="margin-bottom: 20px;">
+            <input type="hidden" name="ruta" th:value="${rutaActual}" />
+            <label for="nombreArchivo">Nuevo archivo:</label>
+            <input type="text" id="nombreArchivo" name="nombreArchivo" placeholder="ejemplo.txt" required>
+            <button type="submit" style="background-color: green; color: white; border: none; padding: 5px 10px;">➕ Crear</button>
+        </form>
+
         <div th:if="${rutaActual != rutaPadre}">
             <form th:action="@{/info}" method="post" style="display: inline;">
                 <input type="hidden" name="ruta" th:value="${rutaPadre}" />
                 <button type="submit" style="color: green; border: 1px solid green;">[..] Subir Directorio</button>
             </form>
         </div>
-        
+
         <ul class="file-list">
             <li th:each="item : ${elementos}">
-                
                 <div class="file-name">
                     <span th:if="${item.directory}" style="color: darkblue;">[DIR]</span>
                     <span th:unless="${item.directory}" style="color: black;">[FILE]</span>
@@ -41,7 +49,7 @@
 
                 <form th:action="@{/eliminar}" method="post" style="display: inline;">
                     <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
-                    <button type="submit" 
+                    <button type="submit"
                             onclick="return confirm('¿Estás seguro de eliminar ' + event.target.form.elements['rutaCompleta'].value + '?');"
                             style="color: white; background-color: red; border: none; padding: 5px 10px; cursor: pointer;">
                         ❌ Eliminar
