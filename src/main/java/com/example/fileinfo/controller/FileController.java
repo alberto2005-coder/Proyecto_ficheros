@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile; // Importación clave para acceso aleatorio
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -116,18 +117,16 @@ public class FileController {
             // Leer el contenido del archivo
             String contenido = new String(java.nio.file.Files.readAllBytes(file.toPath()));
             
-            // 💡 CORRECCIÓN: Usar getParent() para obtener la ruta del directorio padre de forma segura.
+            // CORRECCIÓN: Usar getParent() para obtener la ruta del directorio padre de forma segura.
             String parentPath = file.getParent();
             if (parentPath == null) {
-                // Si getParent() es null (estamos en la raíz), usamos la ruta de vuelta '/' o la ruta completa
-                // para que el formulario de retorno funcione y la vista 'info' maneje la raíz.
                 parentPath = "/"; 
             }
 
             model.addAttribute("rutaCompleta", rutaCompleta);
             model.addAttribute("nombreArchivo", file.getName());
             model.addAttribute("contenido", contenido);
-            model.addAttribute("rutaDirectorioPadre", parentPath); // Nuevo atributo para usar en la plantilla
+            model.addAttribute("rutaDirectorioPadre", parentPath); 
             
             return "editar";
         } catch (IOException e) {
@@ -157,6 +156,77 @@ public class FileController {
             model.addAttribute("mensajeExito", "✅ Archivo guardado correctamente: " + file.getName());
         } catch (IOException e) {
             model.addAttribute("mensajeError", "❌ Error al guardar el archivo: " + e.getMessage());
+        }
+
+        // Recargar el directorio padre (la vista info)
+        File dir = new File(parent);
+        File[] archivos = dir.listFiles();
+        model.addAttribute("rutaActual", parent);
+        model.addAttribute("rutaPadre", dir.getParent());
+        model.addAttribute("elementos", archivos != null
+                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
+                : null);
+
+        return "info";
+    }
+
+    // --- NUEVOS MÉTODOS PARA ACCESO ALEATORIO ---
+
+    @PostMapping("/crearRandomAccessFile")
+    public String crearRandomAccessFile(@RequestParam("ruta") String ruta,
+                                       @RequestParam("nombreArchivo") String nombreArchivo,
+                                       Model model) {
+        File nuevoArchivo = new File(ruta, nombreArchivo);
+
+        if (nuevoArchivo.exists()) {
+            model.addAttribute("mensajeError", "⚠️ El archivo ya existe: " + nuevoArchivo.getAbsolutePath());
+        } else {
+            // Intentamos crear el archivo utilizando RandomAccessFile en modo "rw" (lectura/escritura)
+            try (RandomAccessFile raf = new RandomAccessFile(nuevoArchivo, "rw")) {
+                model.addAttribute("mensajeExito", "✅ Archivo de Acceso Aleatorio creado correctamente: " + nuevoArchivo.getName());
+            } catch (IOException e) {
+                model.addAttribute("mensajeError", "❌ Error al crear el archivo de Acceso Aleatorio: " + e.getMessage());
+            }
+        }
+
+        // Recargar información del directorio actual
+        File dir = new File(ruta);
+        File[] archivos = dir.listFiles();
+        model.addAttribute("rutaActual", ruta);
+        model.addAttribute("rutaPadre", dir.getParent());
+        model.addAttribute("elementos", archivos != null
+                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
+                : null);
+
+        return "info";
+    }
+
+
+    @PostMapping("/editarAleatorio")
+    public String editarAleatorio(@RequestParam("rutaCompleta") String rutaCompleta,
+                                  @RequestParam("posicion") long posicion,
+                                  @RequestParam("contenido") String contenido,
+                                  Model model) {
+        File file = new File(rutaCompleta);
+        String parent = file.getParent();
+
+        if (file.isDirectory()) {
+            model.addAttribute("mensajeError", "❌ No se puede editar un directorio de forma aleatoria.");
+        } else {
+            try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+                // 1. Mover el puntero a la posición deseada
+                raf.seek(posicion);
+
+                // 2. Obtener los bytes del contenido a escribir
+                byte[] data = contenido.getBytes("UTF-8"); 
+
+                // 3. Escribir los bytes
+                raf.write(data);
+
+                model.addAttribute("mensajeExito", "✅ Datos escritos correctamente en la posición " + posicion + " en el archivo: " + file.getName());
+            } catch (IOException e) {
+                model.addAttribute("mensajeError", "❌ Error al escribir en el archivo: " + e.getMessage());
+            }
         }
 
         // Recargar el directorio padre (la vista info)

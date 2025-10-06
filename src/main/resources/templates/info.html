@@ -17,10 +17,17 @@
 
         <form th:action="@{/crearArchivo}" method="post" style="margin-bottom: 20px;">
             <input type="hidden" name="ruta" th:value="${rutaActual}" />
-            <label for="nombreArchivo">Nuevo archivo:</label>
+            <label for="nombreArchivo">Nuevo archivo texto plano:</label>
             <input type="text" id="nombreArchivo" name="nombreArchivo" placeholder="ejemplo.txt" required>
             <button type="submit" style="background-color: green; color: white; border: none; padding: 5px 10px;">➕ Crear</button>
         </form>
+        
+        <form th:action="@{/crearRandomAccessFile}" method="post" style="margin-bottom: 30px;">
+            <input type="hidden" name="ruta" th:value="${rutaActual}" />
+            <label for="nombreArchivoRA">Nuevo archivo Acceso Aleatorio:</label>
+            <input type="text" id="nombreArchivoRA" name="nombreArchivo" placeholder="ejemplo_binario.dat" required>
+            <button type="submit" style="background-color: darkred; color: white; border: none; padding: 5px 10px;">💾 Crear RA</button>
+        </form> 
 
         <div th:if="${rutaActual != rutaPadre}">
             <form th:action="@{/info}" method="post" style="display: inline;">
@@ -52,6 +59,18 @@
                         <button type="submit"
                                 style="color: black; background-color: yellow; border: none; padding: 5px 10px; cursor: pointer;">
                             ✏️ Editar
+                        </button>
+                    </form>
+                </span>
+                
+                <span th:unless="${item.directory}">
+                    <form th:action="@{/editarAleatorio}" method="post" style="display: inline; margin-left: 10px;">
+                        <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                        <input type="number" name="posicion" placeholder="Posición (bytes)" required size="15" min="0" style="width: 120px;">
+                        <input type="text" name="contenido" placeholder="Datos a insertar (texto)" required size="20" style="width: 150px;">
+                        <button type="submit"
+                                style="color: white; background-color: purple; border: none; padding: 5px 10px; cursor: pointer;">
+                            🖋️ Escribir Aleatorio
                         </button>
                     </form>
                 </span>
