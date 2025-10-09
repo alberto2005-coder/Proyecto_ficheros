@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class FileInfoApplication {
+public class Aplicacion {
     public static void main(String[] args) {
-        SpringApplication.run(FileInfoApplication.class, args);
+        SpringApplication.run(Aplicacion.class, args);
     }
 }
