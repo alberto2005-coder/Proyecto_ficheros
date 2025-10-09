@@ -29,6 +29,36 @@
             <button type="submit" style="background-color: darkred; color: white; border: none; padding: 5px 10px;">💾 Crear RA</button>
         </form> 
 
+        <h3 style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 15px;">Conversión de Fichero</h3>
+        <form th:action="@{/convertir}" method="post" style="margin-bottom: 30px;">
+            <input type="hidden" name="rutaDirectorioPadre" th:value="${rutaActual}" />
+            
+            <label for="inputPath">Ruta Fichero ENTRADA:</label>
+            <input type="text" id="inputPath" name="inputPath" placeholder="/ruta/entrada.txt" required size="40">
+            
+            <label for="inputEncoding">Encoding Entrada:</label>
+            <select id="inputEncoding" name="inputEncoding" required>
+                <option value="UTF-8">UTF-8</option>
+                <option value="ASCII">ASCII</option>
+                <option value="UTF-16">UTF-16</option>
+                <option value="ISO-8859-1">ISO-8859-1</option>
+            </select>
+            
+            <br><br>
+            
+            <label for="outputPath">Ruta Fichero SALIDA:</label>
+            <input type="text" id="outputPath" name="outputPath" placeholder="/ruta/salida.txt" required size="40">
+            
+            <label for="outputEncoding">Encoding Salida:</label>
+            <select id="outputEncoding" name="outputEncoding" required>
+                <option value="UTF-8">UTF-8</option>
+                <option value="ASCII">ASCII</option>
+                <option value="UTF-16">UTF-16</option>
+                <option value="ISO-8859-1">ISO-8859-1</option>
+            </select>
+
+            <button type="submit" style="background-color: orange; color: white; border: none; padding: 5px 10px; margin-left: 20px;">🔄 Convertir Fichero</button>
+        </form> 
         <div th:if="${rutaActual != rutaPadre}">
             <form th:action="@{/info}" method="post" style="display: inline;">
                 <input type="hidden" name="ruta" th:value="${rutaPadre}" />
