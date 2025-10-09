@@ -5,6 +5,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile; // Importación clave para acceso aleatorio
@@ -240,4 +242,42 @@ public class FileController {
 
         return "info";
     }
+    @PostMapping("/convertir")
+public String convertirArchivo(
+        @RequestParam("entradaPath") String entradaPath,
+        @RequestParam("encodingEntrada") String encodingEntrada,
+        @RequestParam("salidaPath") String salidaPath,
+        @RequestParam("encodingSalida") String encodingSalida,
+        Model model) {
+
+    StringBuilder mensaje = new StringBuilder();
+
+    try (BufferedReader br = new BufferedReader(
+            new java.io.InputStreamReader(new java.io.FileInputStream(entradaPath), encodingEntrada));
+         BufferedWriter bw = new BufferedWriter(
+            new java.io.OutputStreamWriter(new java.io.FileOutputStream(salidaPath), encodingSalida))) {
+
+        String linea;
+        while ((linea = br.readLine()) != null) {
+            bw.write(linea);
+            bw.newLine();
+        }
+
+        mensaje.append("✅ Conversión completada correctamente.<br>");
+        mensaje.append("Fichero de salida: ").append(salidaPath).append("<br>");
+        mensaje.append("Encoding de entrada: ").append(encodingEntrada).append("<br>");
+        mensaje.append("Encoding de salida: ").append(encodingSalida);
+
+    } catch (java.io.FileNotFoundException e) {
+        mensaje.append("❌ Error: Fichero no encontrado - ").append(e.getMessage());
+    } catch (java.io.IOException e) {
+        mensaje.append("❌ Error de lectura/escritura - ").append(e.getMessage());
+    } catch (Exception e) {
+        mensaje.append("❌ Error general - ").append(e.getMessage());
+    }
+
+    model.addAttribute("mensaje", mensaje.toString());
+    return "info";
+}
+
 }
