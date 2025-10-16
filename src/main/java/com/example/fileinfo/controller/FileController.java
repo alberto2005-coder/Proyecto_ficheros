@@ -25,7 +25,7 @@ public class FileController {
     }
 
     @PostMapping("/info")
-    public String getFileInfo(@RequestParam("ruta") String ruta, Model model) {
+    public String getFileInfo(@RequestParam String ruta, Model model) {
         File file = new File(ruta);
 
         if (!file.exists()) {
@@ -51,7 +51,7 @@ public class FileController {
     }
 
     @PostMapping("/eliminar")
-    public String eliminarArchivo(@RequestParam("rutaCompleta") String rutaCompleta, Model model) {
+    public String eliminarArchivo(@RequestParam String rutaCompleta, Model model) {
         File file = new File(rutaCompleta);
         String parent = file.getParent();
 
@@ -76,8 +76,8 @@ public class FileController {
     }
 
     @PostMapping("/crearArchivo")
-    public String crearArchivo(@RequestParam("ruta") String ruta,
-            @RequestParam("nombreArchivo") String nombreArchivo,
+    public String crearArchivo(@RequestParam String ruta,
+            @RequestParam String nombreArchivo,
             Model model) {
         File nuevoArchivo = new File(ruta, nombreArchivo);
 
@@ -108,7 +108,7 @@ public class FileController {
     }
 
     @GetMapping("/editar")
-    public String mostrarEditor(@RequestParam("rutaCompleta") String rutaCompleta, Model model) {
+    public String mostrarEditor(@RequestParam String rutaCompleta, Model model) {
         File file = new File(rutaCompleta);
 
         if (!file.exists() || file.isDirectory()) {
@@ -149,8 +149,8 @@ public class FileController {
     }
 
     @PostMapping("/guardarEdicion")
-    public String guardarEdicion(@RequestParam("rutaCompleta") String rutaCompleta,
-            @RequestParam("contenido") String contenido,
+    public String guardarEdicion(@RequestParam String rutaCompleta,
+            @RequestParam String contenido,
             Model model) {
         File file = new File(rutaCompleta);
         String parent = file.getParent();
@@ -177,8 +177,8 @@ public class FileController {
     // --- NUEVOS MÉTODOS PARA ACCESO ALEATORIO ---
 
     @PostMapping("/crearRandomAccessFile")
-    public String crearRandomAccessFile(@RequestParam("ruta") String ruta,
-            @RequestParam("nombreArchivo") String nombreArchivo,
+    public String crearRandomAccessFile(@RequestParam String ruta,
+            @RequestParam String nombreArchivo,
             Model model) {
         File nuevoArchivo = new File(ruta, nombreArchivo);
 
@@ -209,9 +209,9 @@ public class FileController {
     }
 
     @PostMapping("/editarAleatorio")
-    public String editarAleatorio(@RequestParam("rutaCompleta") String rutaCompleta,
-            @RequestParam("posicion") long posicion,
-            @RequestParam("contenido") String contenido,
+    public String editarAleatorio(@RequestParam String rutaCompleta,
+            @RequestParam long posicion,
+            @RequestParam String contenido,
             Model model) {
         File file = new File(rutaCompleta);
         String parent = file.getParent();
@@ -300,11 +300,11 @@ public class FileController {
     }
 
     @PostMapping("/convertir")
-    public String convertirFichero(@RequestParam("rutaDirectorioPadre") String rutaDirectorioPadre,
-            @RequestParam("inputPath") String inputPath,
-            @RequestParam("inputEncoding") String inputEncoding,
-            @RequestParam("outputPath") String outputPath,
-            @RequestParam("outputEncoding") String outputEncoding,
+    public String convertirFichero(@RequestParam String rutaDirectorioPadre,
+            @RequestParam String inputPath,
+            @RequestParam String inputEncoding,
+            @RequestParam String outputPath,
+            @RequestParam String outputEncoding,
             Model model) {
 
         File inputFile = new File(inputPath);
