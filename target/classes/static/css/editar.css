@@ -1,0 +1,328 @@
+/* Reset y estilos base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Patrón de fondo animado */
+body::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: backgroundMove 20s linear infinite;
+    z-index: 0;
+}
+
+@keyframes backgroundMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+/* Emoji flotante decorativo */
+body::after {
+    content: '✏️';
+    position: fixed;
+    font-size: 4rem;
+    opacity: 0.15;
+    animation: float 8s ease-in-out infinite;
+    z-index: 0;
+    top: 15%;
+    right: 10%;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-30px) rotate(180deg); }
+}
+
+/* Contenedor principal */
+body > *:not(::before):not(::after) {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 20px auto;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Títulos */
+h1 {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    animation: fadeInDown 0.8s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+h2 {
+    color: white;
+    font-size: 1.8rem;
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Párrafo de ruta */
+p {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    font-weight: 600;
+    color: #555;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+p span {
+    color: #667eea;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+}
+
+/* Formularios */
+form {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+form:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Textarea del editor */
+textarea {
+    width: 100%;
+    min-height: 500px;
+    padding: 20px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    resize: vertical;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    color: #2d3436;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), inset 0 2px 10px rgba(0, 0, 0, 0.05);
+    background: white;
+}
+
+textarea::selection {
+    background: #667eea;
+    color: white;
+}
+
+/* Botones */
+button {
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    margin-top: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+button:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+    transform: translateY(-1px);
+}
+
+/* Botón Guardar */
+button[style*="background-color: darkgreen"] {
+    background: linear-gradient(135deg, #006400 0%, #228b22 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(0, 100, 0, 0.4);
+}
+
+button[style*="background-color: darkgreen"]:hover {
+    box-shadow: 0 6px 25px rgba(0, 100, 0, 0.6);
+}
+
+/* Botón Cancelar */
+button[style*="background-color: gray"] {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+}
+
+button[style*="background-color: gray"]:hover {
+    box-shadow: 0 6px 25px rgba(108, 117, 125, 0.6);
+}
+
+/* Separador */
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    margin: 30px 0;
+}
+
+/* Formularios inline */
+form[style*="display: inline"] {
+    display: inline-block !important;
+    background: none;
+    padding: 0;
+    border: none;
+    margin: 0;
+}
+
+form[style*="display: inline"]:hover {
+    box-shadow: none;
+}
+
+/* Input hidden */
+input[type="hidden"] {
+    display: none;
+}
+
+/* Contador de caracteres (opcional - si quieres añadirlo) */
+.char-counter {
+    text-align: right;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    form {
+        padding: 20px;
+    }
+    
+    textarea {
+        min-height: 400px;
+        font-size: 13px;
+        padding: 15px;
+    }
+    
+    button {
+        width: 100%;
+        margin: 10px 0;
+    }
+    
+    body::after {
+        font-size: 2.5rem;
+        right: 5%;
+    }
+}
+
+/* Mejoras de accesibilidad */
+textarea::-webkit-scrollbar {
+    width: 12px;
+}
+
+textarea::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+    border: 2px solid #f1f1f1;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
