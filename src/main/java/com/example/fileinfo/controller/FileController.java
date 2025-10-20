@@ -1,6 +1,8 @@
 package com.example.fileinfo.controller;
 
 import com.example.fileinfo.model.FileInfo;
+import com.example.fileinfo.util.RAFSqlEmulator;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -8,9 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
@@ -247,6 +250,7 @@ public class FileController {
 
         return "info";
     }
+
     @PostMapping("/crearEstructura")
     public String crearEstructura(Model model) {
 
@@ -371,6 +375,110 @@ public class FileController {
 
         return "info";
     }
+    // -------------------------------------------------------------------------
+    // NUEVOS ENDPOINTS PARA GESTIÓN DE RANDOM ACCESS FILE (RAF)
+    // -------------------------------------------------------------------------
 
-    
+    /**
+     * Muestra la página de gestión del RAF, cargando todos los registros existentes.
+     * Utiliza el método selectRowMap() para obtener los datos.
+     */
+    @GetMapping("/gestionRA")
+    public String gestionRandomAccessFile(@RequestParam String rutaCompleta, Model model) {
+        try {
+            RAFSqlEmulator emulator = new RAFSqlEmulator(rutaCompleta);
+            
+            List<Map<String, String>> registros = new ArrayList<>();
+            int numRegistro = 1;
+            Map<String, String> row;
+
+            // Recorrer el archivo y obtener todos los registros usando selectRowMap
+            do {
+                row = emulator.selectRowMap(numRegistro);
+                // La implementación asume que un Map vacío significa fin de archivo o registro inexistente
+                if (!row.isEmpty()) {
+                    registros.add(row);
+                    numRegistro++;
+                } else {
+                    break;
+                }
+            } while (true);
+            
+            model.addAttribute("rutaCompleta", rutaCompleta);
+            model.addAttribute("registros", registros);
+            model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
+            
+            // CORRECCIÓN AÑADIDA: Calcular y añadir la ruta del padre al modelo
+            String parentPath = new File(rutaCompleta).getParent();
+            model.addAttribute("rutaPadre", parentPath != null ? parentPath : "/"); // Añadir rutaPadre
+            
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al cargar la gestión del RAF: " + e.getMessage());
+            // Si hay un error, redirigir al directorio padre
+            String parentPath = new File(rutaCompleta).getParent();
+            if (parentPath != null) {
+                // Se reutiliza el método existente para volver a la vista del directorio
+                return getFileInfo(parentPath, model); 
+            }
+        }
+        
+        return "gestionRA"; // Nombre de la nueva plantilla
+    }
+
+    /**
+     * Maneja las acciones de DELETE, UPDATE y SELECT CAMPO enviadas desde
+     * gestionRA.html
+     */
+    @PostMapping("/ejecutarRAFSql")
+    public String ejecutarRAFSql(
+            @RequestParam String rutaCompleta,
+            @RequestParam String accion,
+            @RequestParam(required = false) Integer numRegistro,
+            @RequestParam(required = false) String campo,
+            @RequestParam(required = false) String valor,
+            Model model) {
+
+        try {
+            RAFSqlEmulator emulator = new RAFSqlEmulator(rutaCompleta);
+            String mensajeExito = "";
+            String campoLower = campo != null ? campo.toLowerCase() : null;
+
+            if ("delete".equals(accion) && numRegistro != null) {
+                emulator.delete(numRegistro); // Método 6
+                mensajeExito = "✅ Registro " + numRegistro + " eliminado (marcado con ID=0).";
+
+            } else if ("update".equals(accion) && numRegistro != null && campo != null && valor != null) {
+                // Validación básica de tipo de dato para enteros (ID, Edad)
+                if (("id".equals(campoLower) || "edad".equals(campoLower)) && !valor.matches("\\d+")) {
+                    throw new IllegalArgumentException("El campo '" + campo + "' debe ser un número entero.");
+                }
+                emulator.update(numRegistro, campoLower, valor); // Método 5.2
+                mensajeExito = "✅ Registro " + numRegistro + ", campo '" + campo + "' actualizado a '" + valor + "'.";
+
+            } else if ("selectCampo".equals(accion) && numRegistro != null && campo != null) {
+                String resultado = emulator.selectCampo(numRegistro, campoLower); // Método 1
+                // El resultado de selectCampo puede ser un error, o null/vacío si no existe.
+                if (resultado == null || resultado.startsWith("ERROR")) {
+                    model.addAttribute("mensajeError", resultado != null ? resultado : "Registro/campo no encontrado.");
+                } else {
+                    model.addAttribute("selectCampoResultado", "Resultado de SELECT CAMPO (" + campo + " en registro "
+                            + numRegistro + "): **" + resultado + "**");
+                }
+
+            } else {
+                model.addAttribute("mensajeError", "❌ Acción no válida o parámetros incompletos.");
+            }
+
+            // Solo si no hubo un error grave se añade el mensaje de éxito.
+            if (!mensajeExito.isEmpty()) {
+                model.addAttribute("mensajeExito", mensajeExito);
+            }
+
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al ejecutar la acción: " + e.getMessage());
+        }
+
+        // Recargar la página de gestión del RAF para ver los cambios
+        return gestionRandomAccessFile(rutaCompleta, model);
+    }
 }

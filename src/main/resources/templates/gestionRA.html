@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Gestión RAF: ' + ${nombreArchivo}"></title>
+    <link rel="stylesheet" th:href="@{/css/info.css}">
+    <style>
+        /* Estilos específicos para la tabla y formularios */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        
+        .form-inline {
+            display: inline-flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .form-inline button {
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Gestión de Archivo de Acceso Aleatorio (SQL-Style)</h1>
+    <h2 th:text="${nombreArchivo}">Nombre del Archivo</h2>
+    <p>Ruta: <span th:text="${rutaCompleta}"></span></p>
+
+    <p th:if="${mensajeError}" style="color: red; font-weight: bold;" th:text="${mensajeError}"></p>
+    <p th:if="${mensajeExito}" style="color: green; font-weight: bold;" th:text="${mensajeExito}"></p>
+
+    <div th:if="${selectCampoResultado}" style="border: 2px solid #2196F3; padding: 10px; margin-bottom: 20px; background-color: #e3f2fd;">
+        <p th:utext="${selectCampoResultado}" style="color: darkblue; font-weight: bold;"></p>
+    </div>
+
+    <form th:action="@{/info}" method="post" style="display: inline; margin-right: 20px;">
+        <input type="hidden" name="ruta" th:value="${rutaPadre}" /> 
+        <button type="submit" style="background-color: gray; color: white; padding: 10px 20px;">← Volver al Directorio</button>
+    </form>
+    
+    <hr>
+    
+    <h3>1. Prueba: selectCampo (Método 1)</h3>
+    <form th:action="@{/ejecutarRAFSql}" method="post" class="form-inline">
+        <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
+        <input type="hidden" name="accion" value="selectCampo" />
+        <label for="reg">Registro:</label>
+        <input type="number" id="reg" name="numRegistro" placeholder="Nº Reg" required size="5" min="1" style="width: 80px;">
+        <label for="col">Columna:</label>
+        <select id="col" name="campo" required>
+            <option value="id">id</option>
+            <option value="nombre">nombre</option>
+            <option value="edad">edad</option>
+        </select>
+        <button type="submit" style="background-color: #2196F3; color: white;">🔍 Consultar Campo</button>
+    </form>
+
+    <hr>
+    
+    <h3>2. Registros Encontrados (Usando selectRowMap - Método 4)</h3>
+    
+    <p th:if="${#lists.isEmpty(registros)}">No se encontraron registros en este archivo. Usa la función **Escribir Aleatorio** en el directorio para añadir el primer registro.</p>
+
+    <div th:unless="${#lists.isEmpty(registros)}" class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th># Reg.</th>
+                    <th>id (int)</th>
+                    <th>nombre (String 10 chars)</th>
+                    <th>edad (int)</th>
+                    <th>Acciones / Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="registro, iter : ${registros}">
+                    <td th:text="${iter.index + 1}" style="font-weight: bold;"></td>
+                    <td th:text="${registro.id}"></td>
+                    <td th:text="${registro.nombre}"></td>
+                    <td th:text="${registro.edad}"></td>
+                    <td>
+                        <form th:action="@{/ejecutarRAFSql}" method="post" style="display: inline;">
+                            <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
+                            <input type="hidden" name="accion" value="delete" />
+                            <input type="hidden" name="numRegistro" th:value="${iter.index + 1}" />
+                            <button type="submit"
+                                    onclick="return confirm('¿Estás seguro de eliminar el Registro ' + (${iter.index + 1}) + '? El ID se establecerá a 0.');"
+                                    style="color: white; background-color: red; border: none; padding: 5px 10px; cursor: pointer;">
+                                ❌ DELETE
+                            </button>
+                        </form>
+                        
+                        <form th:action="@{/ejecutarRAFSql}" method="post" class="form-inline" style="margin-left: 15px;">
+                            <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
+                            <input type="hidden" name="accion" value="update" />
+                            <input type="hidden" name="numRegistro" th:value="${iter.index + 1}" />
+                            
+                            <select name="campo" required style="padding: 5px;">
+                                <option value="nombre">nombre</option>
+                                <option value="edad">edad</option>
+                                <option value="id">id</option>
+                            </select>
+                            <input type="text" name="valor" placeholder="Nuevo valor" required size="10" style="width: 100px; padding: 5px;">
+                            
+                            <button type="submit"
+                                    style="color: white; background-color: orange; border: none; padding: 5px 10px; cursor: pointer;">
+                                🖋️ UPDATE
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
