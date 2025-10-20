@@ -29,8 +29,14 @@
             <label for="nombreArchivoRA">Nuevo archivo Acceso Aleatorio:</label>
             <input type="text" id="nombreArchivoRA" name="nombreArchivo" placeholder="ejemplo_binario.dat" required>
             <button type="submit" style="background-color: darkred; color: white; border: none; padding: 5px 10px;">💾 Crear RA</button>
+        </form>
+        
+        <form th:action="@{/crearArchivoXML}" method="post" style="margin-bottom: 30px;">
+            <input type="hidden" name="ruta" th:value="${rutaActual}" />
+            <label for="nombreArchivoXML">Nuevo archivo XML (Catálogo):</label>
+            <input type="text" id="nombreArchivoXML" name="nombreArchivo" placeholder="catalogo.xml" required>
+            <button type="submit" style="background-color: blue; color: white; border: none; padding: 5px 10px;">📑 Crear XML</button>
         </form> 
-
         <h3 style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 15px;">Conversión de Fichero</h3>
         <form th:action="@{/convertir}" method="post" style="margin-bottom: 30px;">
             <input type="hidden" name="rutaDirectorioPadre" th:value="${rutaActual}" />
@@ -61,6 +67,7 @@
 
             <button type="submit" style="background-color: orange; color: white; border: none; padding: 5px 10px; margin-left: 20px;">🔄 Convertir Fichero</button>
         </form> 
+        
         <div th:if="${rutaActual != rutaPadre}">
             <form th:action="@{/info}" method="post" style="display: inline;">
                 <input type="hidden" name="ruta" th:value="${rutaPadre}" />
@@ -116,7 +123,16 @@
                         </button>
                     </form>
                 </span>
-
+                
+                <span th:unless="${item.directory}">
+                    <form th:action="@{/gestionXML}" method="get" style="display: inline; margin-left: 10px;">
+                        <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                        <button type="submit"
+                                style="color: white; background-color: #388e3c; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+                            ⚙️ Gestionar XML
+                        </button>
+                    </form>
+                </span>
                 <form th:action="@{/eliminar}" method="post" style="display: inline; margin-left: 10px;">
                     <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                     <button type="submit"

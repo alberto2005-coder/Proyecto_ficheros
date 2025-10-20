@@ -2,6 +2,7 @@ package com.example.fileinfo.controller;
 
 import com.example.fileinfo.model.FileInfo;
 import com.example.fileinfo.util.RAFSqlEmulator;
+import com.example.fileinfo.util.XMLUtil; // <-- NUEVO: Importación para la gestión XML
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -177,7 +178,7 @@ public class FileController {
         return "info";
     }
 
-    // --- NUEVOS MÉTODOS PARA ACCESO ALEATORIO ---
+    // --- MÉTODOS PARA ACCESO ALEATORIO ---
 
     @PostMapping("/crearRandomAccessFile")
     public String crearRandomAccessFile(@RequestParam String ruta,
@@ -375,8 +376,9 @@ public class FileController {
 
         return "info";
     }
+
     // -------------------------------------------------------------------------
-    // NUEVOS ENDPOINTS PARA GESTIÓN DE RANDOM ACCESS FILE (RAF)
+    // ENDPOINTS PARA GESTIÓN DE RANDOM ACCESS FILE (RAF)
     // -------------------------------------------------------------------------
 
     /**
@@ -408,9 +410,9 @@ public class FileController {
             model.addAttribute("registros", registros);
             model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
             
-            // CORRECCIÓN AÑADIDA: Calcular y añadir la ruta del padre al modelo
+            // Calcular y añadir la ruta del padre al modelo
             String parentPath = new File(rutaCompleta).getParent();
-            model.addAttribute("rutaPadre", parentPath != null ? parentPath : "/"); // Añadir rutaPadre
+            model.addAttribute("rutaPadre", parentPath != null ? parentPath : "/"); 
             
         } catch (Exception e) {
             model.addAttribute("mensajeError", "❌ Error al cargar la gestión del RAF: " + e.getMessage());
@@ -444,22 +446,22 @@ public class FileController {
             String campoLower = campo != null ? campo.toLowerCase() : null;
 
             if ("delete".equals(accion) && numRegistro != null) {
-                emulator.delete(numRegistro); // Método 6
+                emulator.delete(numRegistro); 
                 mensajeExito = "✅ Registro " + numRegistro + " eliminado (marcado con ID=0).";
 
             } else if ("update".equals(accion) && numRegistro != null && campo != null && valor != null) {
                 // Validación básica de tipo de dato para enteros (ID, Edad)
-                if (("id".equals(campoLower) || "edad".equals(campoLower)) && !valor.matches("\\d+")) {
+                if (("id".equals(campoLower) || "edad".equals(campoLower)) && !valor.matches("^-?\\d+$")) {
                     throw new IllegalArgumentException("El campo '" + campo + "' debe ser un número entero.");
                 }
-                emulator.update(numRegistro, campoLower, valor); // Método 5.2
+                emulator.update(numRegistro, campoLower, valor); 
                 mensajeExito = "✅ Registro " + numRegistro + ", campo '" + campo + "' actualizado a '" + valor + "'.";
 
             } else if ("selectCampo".equals(accion) && numRegistro != null && campo != null) {
-                String resultado = emulator.selectCampo(numRegistro, campoLower); // Método 1
+                String resultado = emulator.selectCampo(numRegistro, campoLower); 
                 // El resultado de selectCampo puede ser un error, o null/vacío si no existe.
-                if (resultado == null || resultado.startsWith("ERROR")) {
-                    model.addAttribute("mensajeError", resultado != null ? resultado : "Registro/campo no encontrado.");
+                if (resultado == null || "ERROR".equals(resultado)) {
+                    model.addAttribute("mensajeError", "Registro/campo no encontrado o índice inválido.");
                 } else {
                     model.addAttribute("selectCampoResultado", "Resultado de SELECT CAMPO (" + campo + " en registro "
                             + numRegistro + "): **" + resultado + "**");
@@ -475,10 +477,126 @@ public class FileController {
             }
 
         } catch (Exception e) {
-            model.addAttribute("mensajeError", "❌ Error al ejecutar la acción: " + e.getMessage());
+            model.addAttribute("mensajeError", "❌ Error al ejecutar la acción RAF: " + e.getMessage());
         }
 
         // Recargar la página de gestión del RAF para ver los cambios
         return gestionRandomAccessFile(rutaCompleta, model);
+    }
+    
+    // -------------------------------------------------------------------------
+    // NUEVOS ENDPOINTS PARA GESTIÓN DE XML 
+    // -------------------------------------------------------------------------
+
+    @PostMapping("/crearArchivoXML")
+    public String crearArchivoXML(@RequestParam String ruta, @RequestParam String nombreArchivo, Model model) {
+        String rutaCompleta = ruta + File.separator + nombreArchivo;
+        try {
+            // Esto utiliza el constructor XMLUtil(String filePath)
+            new XMLUtil(rutaCompleta); 
+            model.addAttribute("mensajeExito", "✅ Archivo XML de Catálogo creado: " + nombreArchivo);
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al crear el archivo XML: " + e.getMessage());
+        }
+        return getFileInfo(ruta, model);
+    }
+
+    /**
+     * Muestra la página de gestión del XML, cargando todos los registros existentes.
+     */
+    @GetMapping("/gestionXML")
+    public String gestionXML(@RequestParam String rutaCompleta, Model model) {
+        try {
+            // El constructor ahora está definido, por lo que este error desaparece
+            XMLUtil xmlUtil = new XMLUtil(rutaCompleta); 
+            
+            List<Map<String, String>> registros = xmlUtil.readXML();
+            
+            model.addAttribute("rutaCompleta", rutaCompleta);
+            model.addAttribute("registros", registros);
+            model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
+            
+            String parentPath = new File(rutaCompleta).getParent();
+            model.addAttribute("rutaPadre", parentPath != null ? parentPath : "/"); 
+            
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al cargar la gestión del XML: " + e.getMessage());
+            String parentPath = new File(rutaCompleta).getParent();
+            if (parentPath != null) {
+                return getFileInfo(parentPath, model); 
+            }
+        }
+        
+        return "gestionXML"; 
+    }
+
+    /**
+     * Maneja las acciones de DELETE, UPDATE, INSERT y SELECT CAMPO enviadas desde gestionXML.html
+     */
+    @PostMapping("/ejecutarXMLSql")
+    public String ejecutarXMLSql(
+            @RequestParam String rutaCompleta,
+            @RequestParam String accion,
+            @RequestParam(required = false) Integer numRegistro,
+            @RequestParam(required = false) String campo,
+            @RequestParam(required = false) String valor,
+            @RequestParam Map<String, String> params, // Para capturar los campos de inserción
+            Model model) {
+
+        String mensajeExito = "";
+        
+        try {
+            XMLUtil xmlUtil = new XMLUtil(rutaCompleta);
+            String campoLower = campo != null ? campo.toLowerCase() : null;
+
+            if ("delete".equals(accion) && numRegistro != null) {
+                xmlUtil.delete(numRegistro); 
+                mensajeExito = "✅ Registro " + numRegistro + " eliminado permanentemente del XML.";
+                
+            } else if ("update".equals(accion) && numRegistro != null && campo != null && valor != null) {
+                if (("id".equals(campoLower) || "edad".equals(campoLower)) && !valor.matches("^-?\\d+$")) {
+                     throw new IllegalArgumentException("El campo '" + campo + "' debe ser un número entero.");
+                }
+                xmlUtil.update(numRegistro, campoLower, valor); 
+                mensajeExito = "✅ Registro " + numRegistro + ", campo '" + campo + "' actualizado a '" + valor + "'.";
+                
+            } else if ("insert".equals(accion)) {
+                // Filtra los parámetros relevantes para la inserción (id, nombre, edad)
+                Map<String, String> insertMap = params.entrySet().stream()
+                    .filter(e -> e.getKey().matches("^(id|nombre|edad)$"))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    
+                // Validaciones para campos numéricos en la inserción
+                if (insertMap.containsKey("id") && !insertMap.get("id").isEmpty() && !insertMap.get("id").matches("^-?\\d+$")) {
+                    throw new IllegalArgumentException("El campo 'id' debe ser un número entero o estar vacío para auto-asignación.");
+                }
+                if (insertMap.containsKey("edad") && !insertMap.get("edad").isEmpty() && !insertMap.get("edad").matches("^-?\\d+$")) {
+                    throw new IllegalArgumentException("El campo 'edad' debe ser un número entero.");
+                }
+
+                xmlUtil.insert(insertMap);
+                mensajeExito = "✅ Nuevo registro insertado en el XML.";
+                
+            } else if ("selectCampo".equals(accion) && numRegistro != null && campo != null) {
+                 String resultado = xmlUtil.selectCampo(numRegistro, campoLower); 
+                 if (resultado == null || "ERROR".equals(resultado)) {
+                     model.addAttribute("mensajeError", "Registro/campo no encontrado o índice inválido.");
+                 } else {
+                     model.addAttribute("selectCampoResultado", "Resultado de SELECT CAMPO (" + campo + " en registro " + numRegistro + "): **" + resultado + "**");
+                 }
+            
+            } else {
+                 model.addAttribute("mensajeError", "❌ Acción no válida o parámetros incompletos.");
+            }
+
+            if (!mensajeExito.isEmpty()) {
+                 model.addAttribute("mensajeExito", mensajeExito);
+            }
+            
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al ejecutar la acción XML: " + e.getMessage());
+        }
+
+        return gestionXML(rutaCompleta, model);
     }
 }
