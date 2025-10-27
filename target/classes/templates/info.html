@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Información de Ficheros</title>
     <link rel="stylesheet" th:href="@{/css/info.css}">
-
 </head>
 <body>
     <h1>Contenido del Directorio</h1>
@@ -123,6 +122,13 @@
                             ⚙️ Gestionar RAF
                         </button>
                     </form>
+                    <form th:action="@{/exportarRAFXML}" method="get" style="display: inline; margin-left: 10px;">
+                        <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                        <button type="submit" 
+                                style="color: white; background-color: #4CAF50; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+                            💾 Exportar RAF XML
+                        </button>
+                    </form>
                 </span>
                 
                 <span th:if="${!item.directory and item.name.toLowerCase().endsWith('.xml')}">
@@ -145,6 +151,23 @@
                 </form>
             </li>
         </ul>
+        
+        <h3 style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 15px;">Importar/Exportar Directorio</h3>
+        
+        <form th:action="@{/exportarXML}" method="get" style="display: inline; margin-bottom: 20px;">
+            <input type="hidden" name="rutaDirectorio" th:value="${rutaActual}">
+            <button type="submit" style="background-color: blue; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                ⬇️ Exportar Directorio a XML
+            </button>
+        </form>
+
+        <form th:action="@{/importarXML}" method="post" enctype="multipart/form-data" style="display: inline; margin-left: 30px;">
+            <label for="xmlFile" style="margin-right: 10px;">Cargar XML:</label>
+            <input type="file" id="xmlFile" name="xmlFile" required>
+            <button type="submit" style="background-color: darkgreen; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                ⬆️ Importar XML
+            </button>
+        </form>
     </div>
 </body>
 </html>

@@ -271,4 +271,51 @@ public class XMLUtil {
         
         return wrapper.getFicheros();
     }
+
+    public static String rafRecordsToXml(List<Map<String, String>> registros) {
+    // 1. Crear el objeto raíz del documento (Document)
+    try {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.newDocument();
+        
+        // Elemento raíz: <catalogo> (Reutilizando la convención de XMLUtil)
+        Element rootElement = doc.createElement(ROOT_TAG);
+        doc.appendChild(rootElement);
+
+        for (Map<String, String> record : registros) {
+            // Elemento de registro: <item>
+            Element itemElement = doc.createElement(ITEM_TAG);
+            rootElement.appendChild(itemElement);
+
+            // Campos: <campo>VALUE</campo>
+            // Iteramos sobre las claves del mapa para añadir todos los campos presentes.
+            for (Map.Entry<String, String> entry : record.entrySet()) {
+                String field = entry.getKey();
+                String value = entry.getValue();
+                
+                Element fieldElement = doc.createElement(field);
+                fieldElement.setTextContent(value);
+                itemElement.appendChild(fieldElement);
+            }
+        }
+        
+        // 2. Transformar el Document a String para la respuesta HTTP
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+        
+        StringWriter sw = new StringWriter();
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(sw);
+        
+        transformer.transform(source, result);
+        return sw.toString();
+        
+    } catch (Exception e) {
+        // En caso de error, devolvemos una estructura XML simple de error o lanzamos la excepción
+        return "<error>Error al generar XML desde registros RAF: " + e.getMessage() + "</error>";
+    }
+}
 }

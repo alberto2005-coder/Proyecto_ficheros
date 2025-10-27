@@ -52,6 +52,7 @@
     <h2 th:text="${nombreArchivo}">Nombre del Archivo</h2>
     <p>Ruta: <span th:text="${rutaCompleta}"></span></p>
 
+    
     <p th:if="${mensajeError}" style="color: red; font-weight: bold;" th:text="${mensajeError}"></p>
     <p th:if="${mensajeExito}" style="color: green; font-weight: bold;" th:text="${mensajeExito}"></p>
 
@@ -66,6 +67,18 @@
     
     <hr>
     
+    <form th:action="@{/info}" method="post" style="display: inline; margin-right: 20px;">
+        <input type="hidden" name="ruta" th:value="${rutaPadre}" /> 
+        <button type="submit" style="background-color: gray; color: white; padding: 10px 20px;">← Volver al Directorio</button>
+    </form>
+    
+    <form th:action="@{/exportarRAFXML}" method="get" style="display: inline; margin-left: 20px;">
+        <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}"> 
+        <button type="submit" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            💾 Descargar DATOS RAF como XML
+        </button>
+   
+    <hr>
     <h3>1. Prueba: selectCampo (Método 1)</h3>
     <form th:action="@{/ejecutarRAFSql}" method="post" class="form-inline">
         <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
