@@ -1,8 +1,15 @@
 package com.example.fileinfo.model;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.File;
 import java.util.Date;
 
+// --- ANOTACIONES JAXB ---
+@XmlRootElement(name = "file")
+@XmlAccessorType(XmlAccessType.FIELD)
+// ------------------------
 public class FileInfo {
     private String name;
     private String path;
@@ -18,6 +25,10 @@ public class FileInfo {
     private boolean canWrite;
     private boolean canExecute;
     private String[] list; // solo si es directorio
+
+    // Constructor sin argumentos: Obligatorio para JAXB
+    public FileInfo() {
+    }
 
     public FileInfo(File file) {
         this.name = file.getName();
@@ -53,4 +64,8 @@ public class FileInfo {
     public boolean isCanWrite() { return canWrite; }
     public boolean isCanExecute() { return canExecute; }
     public String[] getList() { return list; }
+    
+    // NOTA: JAXB necesita setters si se usa XmlAccessType.PROPERTY o para algunos
+    // tipos de colecciones. Con XmlAccessType.FIELD, solo necesita los getters para
+    // serializar y el constructor sin argumentos para deserializar los campos.
 }

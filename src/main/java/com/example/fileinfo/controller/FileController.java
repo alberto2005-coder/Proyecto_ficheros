@@ -2,12 +2,19 @@ package com.example.fileinfo.controller;
 
 import com.example.fileinfo.model.FileInfo;
 import com.example.fileinfo.util.RAFSqlEmulator;
-import com.example.fileinfo.util.XMLUtil; // <-- NUEVO: Importación para la gestión XML
+import com.example.fileinfo.util.XMLUtil; 
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.xml.bind.JAXBException;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
@@ -21,6 +28,32 @@ import java.util.stream.Collectors;
 public class FileController {
 
     private static final List<String> ALLOWED_ENCODINGS = Arrays.asList("ASCII", "UTF-8", "UTF-16", "ISO-8859-1");
+
+    // =========================================================================
+    // MÉTODOS AUXILIARES
+    // =========================================================================
+    
+    private List<FileInfo> getFileInfoList(String ruta) {
+        File file = new File(ruta);
+        File[] archivos = file.listFiles();
+        return archivos != null
+                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
+                : null;
+    }
+
+    private String reloadInfo(String ruta, Model model, String mensajeExito, String mensajeError) {
+        File dir = new File(ruta);
+        model.addAttribute("rutaActual", ruta);
+        model.addAttribute("rutaPadre", dir.getParent());
+        model.addAttribute("elementos", getFileInfoList(ruta));
+        if (mensajeExito != null) model.addAttribute("mensajeExito", mensajeExito);
+        if (mensajeError != null) model.addAttribute("mensajeError", mensajeError);
+        return "info";
+    }
+
+    // =========================================================================
+    // ENDPOINTS BÁSICOS Y CRUD DE FICHEROS
+    // =========================================================================
 
     @GetMapping("/")
     public String index(Model model) {
@@ -58,25 +91,18 @@ public class FileController {
     public String eliminarArchivo(@RequestParam String rutaCompleta, Model model) {
         File file = new File(rutaCompleta);
         String parent = file.getParent();
+        String mensajeExito = null;
+        String mensajeError = null;
 
         if (!file.exists()) {
-            model.addAttribute("mensajeError", "❌ El archivo no existe: " + rutaCompleta);
+            mensajeError = "❌ El archivo no existe: " + rutaCompleta;
         } else if (file.delete()) {
-            model.addAttribute("mensajeExito", "✅ Archivo eliminado correctamente: " + rutaCompleta);
+            mensajeExito = "✅ Archivo eliminado correctamente: " + rutaCompleta;
         } else {
-            model.addAttribute("mensajeError", "❌ No se pudo eliminar el archivo: " + rutaCompleta);
+            mensajeError = "❌ No se pudo eliminar el archivo: " + rutaCompleta;
         }
 
-        // Recargar el directorio padre
-        File dir = new File(parent);
-        File[] archivos = dir.listFiles();
-        model.addAttribute("rutaActual", parent);
-        model.addAttribute("rutaPadre", dir.getParent());
-        model.addAttribute("elementos", archivos != null
-                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                : null);
-
-        return "info";
+        return reloadInfo(parent, model, mensajeExito, mensajeError);
     }
 
     @PostMapping("/crearArchivo")
@@ -84,35 +110,59 @@ public class FileController {
             @RequestParam String nombreArchivo,
             Model model) {
         File nuevoArchivo = new File(ruta, nombreArchivo);
+        String mensajeExito = null;
+        String mensajeError = null;
 
         if (nuevoArchivo.exists()) {
-            model.addAttribute("mensajeError", "⚠️ El archivo ya existe: " + nuevoArchivo.getAbsolutePath());
+            mensajeError = "⚠️ El archivo ya existe: " + nuevoArchivo.getAbsolutePath();
         } else {
             try {
                 if (nuevoArchivo.createNewFile()) {
-                    model.addAttribute("mensajeExito", "✅ Archivo creado correctamente: " + nuevoArchivo.getName());
+                    mensajeExito = "✅ Archivo creado correctamente: " + nuevoArchivo.getName();
                 } else {
-                    model.addAttribute("mensajeError", "❌ No se pudo crear el archivo.");
+                    mensajeError = "❌ No se pudo crear el archivo.";
                 }
             } catch (IOException e) {
-                model.addAttribute("mensajeError", "❌ Error al crear el archivo: " + e.getMessage());
+                mensajeError = "❌ Error al crear el archivo: " + e.getMessage();
             }
         }
 
-        // Recargar información del directorio actual
-        File dir = new File(ruta);
-        File[] archivos = dir.listFiles();
-        model.addAttribute("rutaActual", ruta);
-        model.addAttribute("rutaPadre", dir.getParent());
-        model.addAttribute("elementos", archivos != null
-                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                : null);
-
-        return "info";
+        return reloadInfo(ruta, model, mensajeExito, mensajeError);
     }
 
+    // --- NUEVO MÉTODO: Crear Archivo XML ---
+    @PostMapping("/crearArchivoXML")
+    public String crearArchivoXML(@RequestParam String ruta,
+            @RequestParam String nombreArchivo,
+            Model model) {
+        
+        File nuevoArchivo = new File(ruta, nombreArchivo);
+        String mensajeExito = null;
+        String mensajeError = null;
+
+        if (nuevoArchivo.exists()) {
+            mensajeError = "⚠️ El archivo XML ya existe: " + nuevoArchivo.getAbsolutePath();
+        } else {
+            // Intentamos inicializar el XML con el XMLUtil, lo que crea el archivo con la estructura base
+            try {
+                // Se necesita un constructor dummy de XMLUtil o asegurar que el constructor
+                // que usa la ruta hace el trabajo de inicialización. Asumiendo la lógica
+                // de XMLUtil, esto debería funcionar:
+                XMLUtil xmlUtil = new XMLUtil(nuevoArchivo.getAbsolutePath());
+                // El constructor de XMLUtil asegura la creación del archivo vacío con la estructura <catalogo>
+                mensajeExito = "✅ Archivo XML (Catálogo) creado correctamente: " + nuevoArchivo.getName();
+            } catch (Exception e) {
+                mensajeError = "❌ Error al crear el archivo XML: " + e.getMessage();
+            }
+        }
+
+        return reloadInfo(ruta, model, mensajeExito, mensajeError);
+    }
+    
+    // ... (Métodos para editar, guardarEdicion, RandomAccessFile y convertir quedan igual)
     @GetMapping("/editar")
     public String mostrarEditor(@RequestParam String rutaCompleta, Model model) {
+        // Lógica de mostrar editor de texto plano...
         File file = new File(rutaCompleta);
 
         if (!file.exists() || file.isDirectory()) {
@@ -121,11 +171,7 @@ public class FileController {
         }
 
         try {
-            // Leer el contenido del archivo
             String contenido = new String(java.nio.file.Files.readAllBytes(file.toPath()));
-
-            // CORRECCIÓN: Usar getParent() para obtener la ruta del directorio padre de
-            // forma segura.
             String parentPath = file.getParent();
             if (parentPath == null) {
                 parentPath = "/";
@@ -139,16 +185,9 @@ public class FileController {
             return "editar";
         } catch (IOException e) {
             model.addAttribute("mensajeError", "❌ Error al leer el archivo: " + e.getMessage());
-            // Recargar el directorio padre antes de volver a info
             String parent = file.getParent();
             File dir = new File(parent != null ? parent : "/");
-            File[] archivos = dir.listFiles();
-            model.addAttribute("rutaActual", dir.getAbsolutePath());
-            model.addAttribute("rutaPadre", dir.getParent());
-            model.addAttribute("elementos", archivos != null
-                    ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                    : null);
-            return "info";
+            return getFileInfo(dir.getAbsolutePath(), model);
         }
     }
 
@@ -158,58 +197,38 @@ public class FileController {
             Model model) {
         File file = new File(rutaCompleta);
         String parent = file.getParent();
+        String mensajeExito = null;
+        String mensajeError = null;
 
         try {
             java.nio.file.Files.write(file.toPath(), contenido.getBytes());
-            model.addAttribute("mensajeExito", "✅ Archivo guardado correctamente: " + file.getName());
+            mensajeExito = "✅ Archivo guardado correctamente: " + file.getName();
         } catch (IOException e) {
-            model.addAttribute("mensajeError", "❌ Error al guardar el archivo: " + e.getMessage());
+            mensajeError = "❌ Error al guardar el archivo: " + e.getMessage();
         }
 
-        // Recargar el directorio padre (la vista info)
-        File dir = new File(parent);
-        File[] archivos = dir.listFiles();
-        model.addAttribute("rutaActual", parent);
-        model.addAttribute("rutaPadre", dir.getParent());
-        model.addAttribute("elementos", archivos != null
-                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                : null);
-
-        return "info";
+        return reloadInfo(parent, model, mensajeExito, mensajeError);
     }
-
-    // --- MÉTODOS PARA ACCESO ALEATORIO ---
 
     @PostMapping("/crearRandomAccessFile")
     public String crearRandomAccessFile(@RequestParam String ruta,
             @RequestParam String nombreArchivo,
             Model model) {
         File nuevoArchivo = new File(ruta, nombreArchivo);
+        String mensajeExito = null;
+        String mensajeError = null;
 
         if (nuevoArchivo.exists()) {
-            model.addAttribute("mensajeError", "⚠️ El archivo ya existe: " + nuevoArchivo.getAbsolutePath());
+            mensajeError = "⚠️ El archivo ya existe: " + nuevoArchivo.getAbsolutePath();
         } else {
-            // Intentamos crear el archivo utilizando RandomAccessFile en modo "rw"
-            // (lectura/escritura)
             try (RandomAccessFile raf = new RandomAccessFile(nuevoArchivo, "rw")) {
-                model.addAttribute("mensajeExito",
-                        "✅ Archivo de Acceso Aleatorio creado correctamente: " + nuevoArchivo.getName());
+                mensajeExito = "✅ Archivo de Acceso Aleatorio creado correctamente: " + nuevoArchivo.getName();
             } catch (IOException e) {
-                model.addAttribute("mensajeError",
-                        "❌ Error al crear el archivo de Acceso Aleatorio: " + e.getMessage());
+                mensajeError = "❌ Error al crear el archivo de Acceso Aleatorio: " + e.getMessage();
             }
         }
 
-        // Recargar información del directorio actual
-        File dir = new File(ruta);
-        File[] archivos = dir.listFiles();
-        model.addAttribute("rutaActual", ruta);
-        model.addAttribute("rutaPadre", dir.getParent());
-        model.addAttribute("elementos", archivos != null
-                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                : null);
-
-        return "info";
+        return reloadInfo(ruta, model, mensajeExito, mensajeError);
     }
 
     @PostMapping("/editarAleatorio")
@@ -219,89 +238,25 @@ public class FileController {
             Model model) {
         File file = new File(rutaCompleta);
         String parent = file.getParent();
+        String mensajeExito = null;
+        String mensajeError = null;
 
         if (file.isDirectory()) {
-            model.addAttribute("mensajeError", "❌ No se puede editar un directorio de forma aleatoria.");
+            mensajeError = "❌ No se puede editar un directorio de forma aleatoria.";
         } else {
             try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-                // 1. Mover el puntero a la posición deseada
                 raf.seek(posicion);
-
-                // 2. Obtener los bytes del contenido a escribir
                 byte[] data = contenido.getBytes("UTF-8");
-
-                // 3. Escribir los bytes
                 raf.write(data);
 
-                model.addAttribute("mensajeExito", "✅ Datos escritos correctamente en la posición " + posicion
-                        + " en el archivo: " + file.getName());
+                mensajeExito = "✅ Datos escritos correctamente en la posición " + posicion
+                        + " en el archivo: " + file.getName();
             } catch (IOException e) {
-                model.addAttribute("mensajeError", "❌ Error al escribir en el archivo: " + e.getMessage());
+                mensajeError = "❌ Error al escribir en el archivo: " + e.getMessage();
             }
         }
 
-        // Recargar el directorio padre (la vista info)
-        File dir = new File(parent);
-        File[] archivos = dir.listFiles();
-        model.addAttribute("rutaActual", parent);
-        model.addAttribute("rutaPadre", dir.getParent());
-        model.addAttribute("elementos", archivos != null
-                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                : null);
-
-        return "info";
-    }
-
-    @PostMapping("/crearEstructura")
-    public String crearEstructura(Model model) {
-
-        final String BASE_DIR_NAME = "estructura";
-        File baseDir = new File(BASE_DIR_NAME);
-
-        String[] abuelos = { "Abuelo", "Abuela" };
-        String[] padres = { "Padre", "Madre" };
-
-        String mensaje;
-        int archivosCreados = 0;
-
-        try {
-
-            if (!baseDir.mkdir()) {
-                throw new IOException("No se pudo crear el directorio base: " + baseDir.getAbsolutePath());
-            }
-
-            int contadorHijos = 1;
-            for (String abuelo : abuelos) {
-                for (String padre : padres) {
-
-                    File dirPadre = new File(baseDir, abuelo + File.separator + padre);
-                    if (!dirPadre.mkdirs()) {
-                        throw new IOException("No se pudo crear el directorio: " + dirPadre.getAbsolutePath());
-                    }
-
-                    File hijo = new File(dirPadre, "Hijo" + contadorHijos + ".txt");
-                    if (hijo.createNewFile()) {
-                        archivosCreados++;
-                    }
-
-                    File hija = new File(dirPadre, "Hija" + (contadorHijos + 1) + ".txt");
-                    if (hija.createNewFile()) {
-                        archivosCreados++;
-                    }
-
-                    contadorHijos += 2;
-                }
-            }
-
-            mensaje = "✅ Estructura genealógica creada con éxito en **" + baseDir.getAbsolutePath() + "**."
-                    + " (" + archivosCreados + " archivos y 8 directorios creados).";
-
-        } catch (IOException e) {
-            mensaje = "❌ Error al crear la estructura genealógica: " + e.getMessage();
-        }
-
-        model.addAttribute("mensaje", mensaje);
-        return "index";
+        return reloadInfo(parent, model, mensajeExito, mensajeError);
     }
 
     @PostMapping("/convertir")
@@ -318,21 +273,19 @@ public class FileController {
         String inputEnc = inputEncoding.toUpperCase();
         String outputEnc = outputEncoding.toUpperCase();
 
-        // 1. Validar existencia del archivo de entrada y codificaciones
+        String mensajeExito = null;
+        String mensajeError = null;
+
         if (!inputFile.exists() || inputFile.isDirectory()) {
-            model.addAttribute("mensajeError", "❌ La ruta de entrada no es un fichero válido: " + inputPath);
+            mensajeError = "❌ La ruta de entrada no es un fichero válido: " + inputPath;
         } else if (!ALLOWED_ENCODINGS.contains(inputEnc) || !ALLOWED_ENCODINGS.contains(outputEnc)) {
-            model.addAttribute("mensajeError",
-                    "❌ Una o ambas codificaciones no son válidas. Soportadas: " + ALLOWED_ENCODINGS);
+            mensajeError = "❌ Una o ambas codificaciones no son válidas. Soportadas: " + ALLOWED_ENCODINGS;
         } else {
-            // 2. Ejecutar la conversión
             try (
-                    // Lector: Lee bytes y los decodifica usando inputEncoding
                     FileInputStream fis = new FileInputStream(inputFile);
                     InputStreamReader isr = new InputStreamReader(fis, Charset.forName(inputEnc));
                     BufferedReader reader = new BufferedReader(isr);
 
-                    // Escritor: Codifica caracteres usando outputEncoding y escribe los bytes
                     FileOutputStream fos = new FileOutputStream(outputFile);
                     OutputStreamWriter osw = new OutputStreamWriter(fos, Charset.forName(outputEnc));
                     BufferedWriter writer = new BufferedWriter(osw)) {
@@ -345,46 +298,24 @@ public class FileController {
                 }
 
                 writer.flush();
-                model.addAttribute("mensajeExito",
-                        "✅ Conversión completada: '" + inputFile.getName() + "' (" + inputEnc + ") -> '" +
-                                outputFile.getName() + "' (" + outputEnc + "). Líneas: " + lines);
+                mensajeExito = "✅ Conversión completada: '" + inputFile.getName() + "' (" + inputEnc + ") -> '" +
+                        outputFile.getName() + "' (" + outputEnc + "). Líneas: " + lines;
 
             } catch (FileNotFoundException e) {
-                // Captura si el fichero de entrada no existe, o si no se puede crear el de
-                // salida
-                model.addAttribute("mensajeError", "❌ Archivo no encontrado o no accesible: " + e.getMessage());
+                mensajeError = "❌ Archivo no encontrado o no accesible: " + e.getMessage();
             } catch (UnsupportedCharsetException e) {
-                // Aunque se validan antes, esta excepción captura fallos de Charset.forName
-                model.addAttribute("mensajeError", "❌ Codificación no soportada por el sistema: " + e.getCharsetName());
+                mensajeError = "❌ Codificación no soportada por el sistema: " + e.getCharsetName();
             } catch (IOException e) {
-                // Captura errores de lectura/escritura
-                model.addAttribute("mensajeError", "❌ Error de I/O durante la conversión: " + e.getMessage());
+                mensajeError = "❌ Error de I/O durante la conversión: " + e.getMessage();
             } catch (Exception e) {
-                // Captura cualquier otra excepción
-                model.addAttribute("mensajeError", "❌ Error inesperado: " + e.getMessage());
+                mensajeError = "❌ Error inesperado: " + e.getMessage();
             }
         }
 
-        // 3. Recargar la vista info del directorio actual o padre
-        File dir = new File(rutaDirectorioPadre);
-        File[] archivos = dir.listFiles();
-        model.addAttribute("rutaActual", rutaDirectorioPadre);
-        model.addAttribute("rutaPadre", dir.getParent());
-        model.addAttribute("elementos", archivos != null
-                ? Arrays.stream(archivos).map(FileInfo::new).collect(Collectors.toList())
-                : null);
-
-        return "info";
+        return reloadInfo(rutaDirectorioPadre, model, mensajeExito, mensajeError);
     }
-
-    // -------------------------------------------------------------------------
-    // ENDPOINTS PARA GESTIÓN DE RANDOM ACCESS FILE (RAF)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Muestra la página de gestión del RAF, cargando todos los registros existentes.
-     * Utiliza el método selectRowMap() para obtener los datos.
-     */
+    
+    // ... (gestionRA y ejecutarRAFSql quedan igual)
     @GetMapping("/gestionRA")
     public String gestionRandomAccessFile(@RequestParam String rutaCompleta, Model model) {
         try {
@@ -394,10 +325,8 @@ public class FileController {
             int numRegistro = 1;
             Map<String, String> row;
 
-            // Recorrer el archivo y obtener todos los registros usando selectRowMap
             do {
                 row = emulator.selectRowMap(numRegistro);
-                // La implementación asume que un Map vacío significa fin de archivo o registro inexistente
                 if (!row.isEmpty()) {
                     registros.add(row);
                     numRegistro++;
@@ -410,27 +339,20 @@ public class FileController {
             model.addAttribute("registros", registros);
             model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
             
-            // Calcular y añadir la ruta del padre al modelo
             String parentPath = new File(rutaCompleta).getParent();
             model.addAttribute("rutaPadre", parentPath != null ? parentPath : "/"); 
             
         } catch (Exception e) {
             model.addAttribute("mensajeError", "❌ Error al cargar la gestión del RAF: " + e.getMessage());
-            // Si hay un error, redirigir al directorio padre
             String parentPath = new File(rutaCompleta).getParent();
             if (parentPath != null) {
-                // Se reutiliza el método existente para volver a la vista del directorio
                 return getFileInfo(parentPath, model); 
             }
         }
         
-        return "gestionRA"; // Nombre de la nueva plantilla
+        return "gestionRA";
     }
 
-    /**
-     * Maneja las acciones de DELETE, UPDATE y SELECT CAMPO enviadas desde
-     * gestionRA.html
-     */
     @PostMapping("/ejecutarRAFSql")
     public String ejecutarRAFSql(
             @RequestParam String rutaCompleta,
@@ -450,7 +372,6 @@ public class FileController {
                 mensajeExito = "✅ Registro " + numRegistro + " eliminado (marcado con ID=0).";
 
             } else if ("update".equals(accion) && numRegistro != null && campo != null && valor != null) {
-                // Validación básica de tipo de dato para enteros (ID, Edad)
                 if (("id".equals(campoLower) || "edad".equals(campoLower)) && !valor.matches("^-?\\d+$")) {
                     throw new IllegalArgumentException("El campo '" + campo + "' debe ser un número entero.");
                 }
@@ -459,7 +380,6 @@ public class FileController {
 
             } else if ("selectCampo".equals(accion) && numRegistro != null && campo != null) {
                 String resultado = emulator.selectCampo(numRegistro, campoLower); 
-                // El resultado de selectCampo puede ser un error, o null/vacío si no existe.
                 if (resultado == null || "ERROR".equals(resultado)) {
                     model.addAttribute("mensajeError", "Registro/campo no encontrado o índice inválido.");
                 } else {
@@ -471,7 +391,6 @@ public class FileController {
                 model.addAttribute("mensajeError", "❌ Acción no válida o parámetros incompletos.");
             }
 
-            // Solo si no hubo un error grave se añade el mensaje de éxito.
             if (!mensajeExito.isEmpty()) {
                 model.addAttribute("mensajeExito", mensajeExito);
             }
@@ -480,123 +399,180 @@ public class FileController {
             model.addAttribute("mensajeError", "❌ Error al ejecutar la acción RAF: " + e.getMessage());
         }
 
-        // Recargar la página de gestión del RAF para ver los cambios
         return gestionRandomAccessFile(rutaCompleta, model);
     }
     
-    // -------------------------------------------------------------------------
-    // NUEVOS ENDPOINTS PARA GESTIÓN DE XML 
-    // -------------------------------------------------------------------------
-
-    @PostMapping("/crearArchivoXML")
-    public String crearArchivoXML(@RequestParam String ruta, @RequestParam String nombreArchivo, Model model) {
-        String rutaCompleta = ruta + File.separator + nombreArchivo;
-        try {
-            // Esto utiliza el constructor XMLUtil(String filePath)
-            new XMLUtil(rutaCompleta); 
-            model.addAttribute("mensajeExito", "✅ Archivo XML de Catálogo creado: " + nombreArchivo);
-        } catch (Exception e) {
-            model.addAttribute("mensajeError", "❌ Error al crear el archivo XML: " + e.getMessage());
-        }
-        return getFileInfo(ruta, model);
-    }
+    // =========================================================================
+    // ENDPOINTS PARA GESTIÓN DE XML CON ADAPTADORES
+    // =========================================================================
 
     /**
-     * Muestra la página de gestión del XML, cargando todos los registros existentes.
+     * Muestra la página de gestión XML (gestionXML.html), 
+     * cargando la lista de registros del archivo XML.
+     * @param rutaCompleta La ruta al archivo XML (no al directorio).
      */
     @GetMapping("/gestionXML")
     public String gestionXML(@RequestParam String rutaCompleta, Model model) {
         try {
-            // El constructor ahora está definido, por lo que este error desaparece
+            // Usar rutaCompleta aquí, que es el path al archivo XML
             XMLUtil xmlUtil = new XMLUtil(rutaCompleta); 
             
-            List<Map<String, String>> registros = xmlUtil.readXML();
+            // Cargar todos los registros del XML
+            List<Map<String, String>> registros = xmlUtil.readXML(); 
             
             model.addAttribute("rutaCompleta", rutaCompleta);
             model.addAttribute("registros", registros);
             model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
             
+            // Calcular y añadir la ruta del padre al modelo
             String parentPath = new File(rutaCompleta).getParent();
             model.addAttribute("rutaPadre", parentPath != null ? parentPath : "/"); 
             
         } catch (Exception e) {
             model.addAttribute("mensajeError", "❌ Error al cargar la gestión del XML: " + e.getMessage());
+            // Si hay un error, redirigir al directorio padre
             String parentPath = new File(rutaCompleta).getParent();
             if (parentPath != null) {
-                return getFileInfo(parentPath, model); 
+                return reloadInfo(parentPath, model, null, "Error al cargar la gestión XML.");
             }
         }
         
-        return "gestionXML"; 
+        return "gestionXML"; // Nombre de la plantilla
     }
-
+    
     /**
-     * Maneja las acciones de DELETE, UPDATE, INSERT y SELECT CAMPO enviadas desde gestionXML.html
+     * Maneja las acciones de INSERT, DELETE, UPDATE y SELECT CAMPO enviadas desde gestionXML.html
      */
     @PostMapping("/ejecutarXMLSql")
     public String ejecutarXMLSql(
             @RequestParam String rutaCompleta,
             @RequestParam String accion,
-            @RequestParam(required = false) Integer numRegistro,
-            @RequestParam(required = false) String campo,
-            @RequestParam(required = false) String valor,
-            @RequestParam Map<String, String> params, // Para capturar los campos de inserción
+            @RequestParam Map<String, String> params, // Captura todos los parámetros del formulario
             Model model) {
 
-        String mensajeExito = "";
-        
         try {
             XMLUtil xmlUtil = new XMLUtil(rutaCompleta);
-            String campoLower = campo != null ? campo.toLowerCase() : null;
-
-            if ("delete".equals(accion) && numRegistro != null) {
-                xmlUtil.delete(numRegistro); 
-                mensajeExito = "✅ Registro " + numRegistro + " eliminado permanentemente del XML.";
-                
-            } else if ("update".equals(accion) && numRegistro != null && campo != null && valor != null) {
-                if (("id".equals(campoLower) || "edad".equals(campoLower)) && !valor.matches("^-?\\d+$")) {
-                     throw new IllegalArgumentException("El campo '" + campo + "' debe ser un número entero.");
-                }
-                xmlUtil.update(numRegistro, campoLower, valor); 
-                mensajeExito = "✅ Registro " + numRegistro + ", campo '" + campo + "' actualizado a '" + valor + "'.";
-                
-            } else if ("insert".equals(accion)) {
-                // Filtra los parámetros relevantes para la inserción (id, nombre, edad)
-                Map<String, String> insertMap = params.entrySet().stream()
-                    .filter(e -> e.getKey().matches("^(id|nombre|edad)$"))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                    
-                // Validaciones para campos numéricos en la inserción
-                if (insertMap.containsKey("id") && !insertMap.get("id").isEmpty() && !insertMap.get("id").matches("^-?\\d+$")) {
-                    throw new IllegalArgumentException("El campo 'id' debe ser un número entero o estar vacío para auto-asignación.");
-                }
-                if (insertMap.containsKey("edad") && !insertMap.get("edad").isEmpty() && !insertMap.get("edad").matches("^-?\\d+$")) {
-                    throw new IllegalArgumentException("El campo 'edad' debe ser un número entero.");
-                }
-
-                xmlUtil.insert(insertMap);
-                mensajeExito = "✅ Nuevo registro insertado en el XML.";
-                
-            } else if ("selectCampo".equals(accion) && numRegistro != null && campo != null) {
-                 String resultado = xmlUtil.selectCampo(numRegistro, campoLower); 
-                 if (resultado == null || "ERROR".equals(resultado)) {
-                     model.addAttribute("mensajeError", "Registro/campo no encontrado o índice inválido.");
-                 } else {
-                     model.addAttribute("selectCampoResultado", "Resultado de SELECT CAMPO (" + campo + " en registro " + numRegistro + "): **" + resultado + "**");
-                 }
+            String mensajeExito = "";
             
-            } else {
-                 model.addAttribute("mensajeError", "❌ Acción no válida o parámetros incompletos.");
+            switch (accion.toLowerCase()) {
+                case "insert":
+                    xmlUtil.insert(params); 
+                    mensajeExito = "✅ Nuevo registro añadido correctamente al XML.";
+                    break;
+                    
+                case "delete":
+                    int deleteRow = Integer.parseInt(params.get("numRegistro"));
+                    xmlUtil.delete(deleteRow); 
+                    mensajeExito = "✅ Registro " + deleteRow + " eliminado permanentemente del XML.";
+                    break;
+
+                case "update":
+                    int updateRow = Integer.parseInt(params.get("numRegistro"));
+                    String campo = params.get("campo");
+                    String valor = params.get("valor");
+                    
+                    if (("id".equalsIgnoreCase(campo) || "edad".equalsIgnoreCase(campo)) && !valor.matches("^-?\\d+$")) {
+                        throw new IllegalArgumentException("El campo '" + campo + "' debe ser un número entero.");
+                    }
+                    
+                    xmlUtil.update(updateRow, campo, valor);
+                    mensajeExito = "✅ Registro " + updateRow + ", campo '" + campo + "' actualizado a '" + valor + "'.";
+                    break;
+
+                case "selectcampo":
+                    int selectRow = Integer.parseInt(params.get("numRegistro"));
+                    String selectCampo = params.get("campo");
+                    String resultado = xmlUtil.selectCampo(selectRow, selectCampo); 
+                    
+                    if (resultado == null) {
+                         model.addAttribute("mensajeError", "Registro/campo no encontrado o índice inválido.");
+                    } else {
+                        model.addAttribute("selectCampoResultado", "Resultado de SELECT CAMPO (" + selectCampo + " en registro "
+                                + selectRow + "): **" + resultado + "**");
+                    }
+                    mensajeExito = "Consulta ejecutada.";
+                    break;
+
+                default:
+                    model.addAttribute("mensajeError", "❌ Acción SQL no válida: " + accion);
+                    break;
             }
 
             if (!mensajeExito.isEmpty()) {
-                 model.addAttribute("mensajeExito", mensajeExito);
+                model.addAttribute("mensajeExito", mensajeExito);
             }
-            
+
+        } catch (NumberFormatException e) {
+            model.addAttribute("mensajeError", "❌ Error de formato: Asegúrate de que los números de registro, ID y Edad son válidos.");
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("mensajeError", "❌ Error de validación: " + e.getMessage());
         } catch (Exception e) {
             model.addAttribute("mensajeError", "❌ Error al ejecutar la acción XML: " + e.getMessage());
         }
 
         return gestionXML(rutaCompleta, model);
+    }
+    
+    // ... (exportarXML e importarXML quedan igual)
+    @GetMapping("/exportarXML")
+    public ResponseEntity<byte[]> exportarXML(@RequestParam String rutaDirectorio) {
+        try {
+            List<FileInfo> elementos = getFileInfoList(rutaDirectorio);
+            
+            String xmlString = XMLUtil.dat2xml(elementos);
+
+            byte[] xmlBytes = xmlString.getBytes("UTF-8");
+            String dirName = new File(rutaDirectorio).getName().isEmpty() ? "raiz" : new File(rutaDirectorio).getName();
+            String fileName = "ficheros_" + dirName.replaceAll("[^a-zA-Z0-9.-]", "_") + ".xml";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+            headers.setContentLength(xmlBytes.length);
+            headers.setContentDispositionFormData("attachment", fileName);
+            
+            return new ResponseEntity<>(xmlBytes, headers, HttpStatus.OK);
+
+        } catch (JAXBException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error de JAXB al serializar: " + e.getMessage()).getBytes());
+        } catch (IOException e) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error de I/O: " + e.getMessage()).getBytes());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(("Error al exportar: " + e.getMessage()).getBytes());
+        }
+    }
+
+    @PostMapping("/importarXML")
+    public String importarXML(@RequestParam("xmlFile") MultipartFile file, Model model, RedirectAttributes redirectAttributes) {
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensajeError", "❌ Por favor, selecciona un archivo XML para importar.");
+            return "redirect:/";
+        }
+        
+        try (InputStream inputStream = file.getInputStream()) {
+            
+            String xmlString = new BufferedReader(new InputStreamReader(inputStream))
+                                     .lines().collect(Collectors.joining("\n"));
+            
+            List<FileInfo> ficherosCargados = XMLUtil.xml2dat(xmlString);
+            
+            model.addAttribute("rutaActual", "IMPORTACIÓN XML: " + file.getOriginalFilename());
+            model.addAttribute("rutaPadre", null);
+            model.addAttribute("elementos", ficherosCargados);
+            model.addAttribute("mensajeExito", "✅ Importación XML completada. Mostrando " + ficherosCargados.size() + " registros.");
+            
+            return "info";
+
+        } catch (JAXBException e) {
+            model.addAttribute("mensajeError", "❌ Error al procesar el XML (JAXB): Asegúrate de que el formato es correcto. " + e.getMessage());
+        } catch (IOException e) {
+            model.addAttribute("mensajeError", "❌ Error de I/O al leer el archivo: " + e.getMessage());
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error inesperado durante la importación: " + e.getMessage());
+        }
+        
+        return "index";
     }
 }

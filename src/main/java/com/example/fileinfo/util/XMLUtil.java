@@ -1,5 +1,12 @@
 package com.example.fileinfo.util;
 
+import com.example.fileinfo.model.FileInfo;
+import com.example.fileinfo.model.FileListWrapper; // Importación de la clase auxiliar
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -13,6 +20,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +32,7 @@ import java.util.stream.Collectors;
  * Clase de utilidad para simular operaciones SQL (SELECT, UPDATE, DELETE, INSERT) sobre
  * un fichero XML con estructura <catalogo> <item> <campo>.
  * * CAMPOS: <id>, <nombre>, <edad>
+ * * NOTA: Esta clase también contiene los ADAPTADORES JAXB para FileInfo.
  */
 public class XMLUtil {
 
@@ -212,5 +222,53 @@ public class XMLUtil {
 
         records.add(newRecord);
         writeXML(records);
+    }
+    
+    // =========================================================================
+    // ADAPTADORES dat2xml() y xml2dat() para FileInfo (con JAXB)
+    // =========================================================================
+
+    /**
+     * FUNCIÓN ADAPTADORA: dat2xml()
+     * Convierte una Lista de FileInfo (dat) a una cadena XML (String) usando JAXB.
+     */
+    public static String dat2xml(List<FileInfo> dataList) throws JAXBException {
+        // 1. Crear el objeto contenedor (wrapper)
+        FileListWrapper wrapper = new FileListWrapper(dataList);
+
+        // 2. Inicializar el contexto JAXB con la clase raíz del XML
+        JAXBContext jaxbContext = JAXBContext.newInstance(FileListWrapper.class, FileInfo.class);
+        
+        // 3. Crear el Marshaller (serializador)
+        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+        
+        // Configuración de la salida (formato bonito)
+        jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+        
+        // 4. Escribir el objeto en un String
+        StringWriter sw = new StringWriter();
+        jaxbMarshaller.marshal(wrapper, sw);
+
+        return sw.toString();
+    }
+
+    /**
+     * FUNCIÓN ADAPTADORA: xml2dat()
+     * Convierte una cadena XML (String) a una Lista de FileInfo (dat) usando JAXB.
+     */
+    public static List<FileInfo> xml2dat(String xmlString) throws JAXBException {
+        // 1. Inicializar el contexto JAXB con la clase raíz del XML
+        JAXBContext jaxbContext = JAXBContext.newInstance(FileListWrapper.class, FileInfo.class);
+        
+        // 2. Crear el Unmarshaller (deserializador)
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        
+        // 3. Leer el XML desde el String
+        StringReader reader = new StringReader(xmlString);
+        
+        // 4. Convertir el XML a objeto Java (FileListWrapper)
+        FileListWrapper wrapper = (FileListWrapper) jaxbUnmarshaller.unmarshal(reader);
+        
+        return wrapper.getFicheros();
     }
 }

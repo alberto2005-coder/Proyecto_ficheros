@@ -37,6 +37,7 @@
             <input type="text" id="nombreArchivoXML" name="nombreArchivo" placeholder="catalogo.xml" required>
             <button type="submit" style="background-color: blue; color: white; border: none; padding: 5px 10px;">📑 Crear XML</button>
         </form> 
+        
         <h3 style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 15px;">Conversión de Fichero</h3>
         <form th:action="@{/convertir}" method="post" style="margin-bottom: 30px;">
             <input type="hidden" name="rutaDirectorioPadre" th:value="${rutaActual}" />
@@ -114,7 +115,7 @@
                     </form>
                 </span>
                 
-                <span th:unless="${item.directory}">
+                <span th:if="${!item.directory and item.name.toLowerCase().endsWith('.dat')}">
                     <form th:action="@{/gestionRA}" method="get" style="display: inline; margin-left: 10px;">
                         <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                         <button type="submit"
@@ -124,7 +125,7 @@
                     </form>
                 </span>
                 
-                <span th:unless="${item.directory}">
+                <span th:if="${!item.directory and item.name.toLowerCase().endsWith('.xml')}">
                     <form th:action="@{/gestionXML}" method="get" style="display: inline; margin-left: 10px;">
                         <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                         <button type="submit"
@@ -133,6 +134,7 @@
                         </button>
                     </form>
                 </span>
+                
                 <form th:action="@{/eliminar}" method="post" style="display: inline; margin-left: 10px;">
                     <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                     <button type="submit"
