@@ -119,7 +119,7 @@
                         <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                         <button type="submit"
                                 style="color: white; background-color: darkblue; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
-                            ⚙️ Gestionar RAF
+                            ⚙️ Gestionar RAF (Fijo)
                         </button>
                     </form>
                     <form th:action="@{/exportarRAFXML}" method="get" style="display: inline; margin-left: 10px;">
@@ -136,7 +136,27 @@
                         <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
                         <button type="submit"
                                 style="color: white; background-color: #388e3c; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
-                            ⚙️ Gestionar XML
+                            ⚙️ Gestionar XML (Fijo)
+                        </button>
+                    </form>
+                </span>
+
+                <span th:if="${!item.directory and item.name.toLowerCase().endsWith('.dat') and #lists.contains(elementos.![name], item.name + '.schema.json')}">
+                    <form th:action="@{/gestionRAFLEX}" method="get" style="display: inline; margin-left: 10px;">
+                        <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                        <button type="submit" 
+                                style="color: white; background-color: #6a1b9a; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">
+                            ✨ Gestionar DAT (Flexible)
+                        </button>
+                    </form>
+                </span>
+
+                <span th:if="${!item.directory and item.name.toLowerCase().endsWith('.xml') and #lists.contains(elementos.![name], item.name + '.schema.json')}">
+                    <form th:action="@{/gestionXMLFLEX}" method="get" style="display: inline; margin-left: 10px;">
+                        <input type="hidden" name="rutaCompleta" th:value="${item.absolutePath}" />
+                        <button type="submit" 
+                                style="color: white; background-color: #00695c; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">
+                            ✨ Gestionar XML (Flexible)
                         </button>
                     </form>
                 </span>

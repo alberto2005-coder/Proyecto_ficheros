@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión Flexible de Fichero</title>
+    <link rel="stylesheet" th:href="@{/css/info.css}">
+</head>
+<body>
+    <h1>Gestión Flexible: <span th:text="${nombreArchivo}"></span></h1>
+    <p><a th:href="@{/info(ruta=${rutaPadre})}">← Volver al Directorio</a></p>
+
+    <p th:if="${mensajeExito}" style="color: green;" th:text="${mensajeExito}"></p>
+    <p th:if="${mensajeError}" style="color: red;" th:text="${mensajeError}"></p>
+
+    <h2>Contenido del Fichero (Según Esquema)</h2>
+    <table border="1" style="width:100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th th:each="columna : ${columnas}" th:text="${columna}"></th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:if="${#lists.isEmpty(registros)}">
+                <td th:colspan="${#lists.size(columnas) + 2}" style="text-align: center;">-- Fichero vacío --</td>
+            </tr>
+            <tr th:each="registro, iterStat : ${registros}">
+                <td th:text="${iterStat.count}"></td>
+                <td th:each="columna : ${columnas}" th:text="${registro.get(columna)}"></td>
+                <td>
+                    <form th:action="@{/ejecutarRAFSqlFLEX}" method="post" style="display: inline;">
+                        <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
+                        <input type="hidden" name="accion" value="delete" />
+                        <input type="hidden" name="numRegistro" th:value="${iterStat.count}" />
+                        <button type="submit" onclick="return confirm('¿Borrar registro?');" style="background-color: red; color: white;">❌ Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr style="margin: 30px 0;"/>
+
+    <h2>Añadir Nuevo Registro</h2>
+    <form th:action="@{/ejecutarRAFSqlFLEX}" method="post">
+        <input type="hidden" name="rutaCompleta" th:value="${rutaCompleta}" />
+        <input type="hidden" name="accion" value="insert" />
+
+        <div th:each="columna : ${columnas}" style="margin-bottom: 10px;">
+            <label th:for="${columna}" th:text="${columna} + ':'" style="display: inline-block; width: 150px;"></label>
+            <input type="text" th:id="${columna}" th:name="${columna}" required />
+        </div>
+
+        <button type="submit" style="margin-top: 10px; background-color: green; color: white;">➕ Añadir Registro</button>
+    </form>
+</body>
+</html>

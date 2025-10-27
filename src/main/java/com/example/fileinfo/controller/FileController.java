@@ -2,7 +2,9 @@ package com.example.fileinfo.controller;
 
 import com.example.fileinfo.model.FileInfo;
 import com.example.fileinfo.util.RAFSqlEmulator;
+import com.example.fileinfo.util.RAFSqlEmulatorFlexible;
 import com.example.fileinfo.util.XMLUtil;
+import com.example.fileinfo.util.XMLUtilFlexible;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -632,6 +634,143 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("❌ Error inesperado al exportar los datos RAF: " + e.getMessage()).getBytes());
         }
-        // LÍNEA ELIMINADA: No se requiere 'return "gestionRA";' aquí, ya que el método devuelve ResponseEntity
+     
+    }
+    @GetMapping("/gestionRAFLEX")
+    public String gestionFlexible(@RequestParam String rutaCompleta, Model model) {
+        try {
+            RAFSqlEmulatorFlexible emulator = new RAFSqlEmulatorFlexible(rutaCompleta);
+
+            model.addAttribute("columnas", emulator.getColumnNames());
+
+            List<Map<String, String>> registros = new ArrayList<>();
+            int numRegistro = 1;
+            Map<String, String> row;
+
+            do {
+                row = emulator.selectRowMap(numRegistro);
+                if (!row.isEmpty()) {
+                    registros.add(row);
+                    numRegistro++;
+                } else {
+                    break;
+                }
+            } while (true);
+
+            model.addAttribute("rutaCompleta", rutaCompleta);
+            model.addAttribute("registros", registros);
+            model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
+            model.addAttribute("rutaPadre", new File(rutaCompleta).getParent());
+
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al cargar gestión flexible: " + e.getMessage());
+            String parentPath = new File(rutaCompleta).getParent();
+            return reloadInfo(parentPath, model, null, "Error: " + e.getMessage());
+        }
+        
+        return "gestionRAFLEX"; // Nueva plantilla Thymeleaf
+    }
+    
+    /**
+     * Ejecuta acciones (INSERT, DELETE) sobre un fichero de forma FLEXIBLE.
+     */
+    @PostMapping("/ejecutarRAFSqlFLEX")
+    public String ejecutarRAFSqlFlexible(
+            @RequestParam String rutaCompleta,
+            @RequestParam String accion,
+            @RequestParam Map<String, String> allParams,
+            Model model) {
+
+        try {
+            RAFSqlEmulatorFlexible emulator = new RAFSqlEmulatorFlexible(rutaCompleta);
+            String mensajeExito = "";
+
+            switch (accion.toLowerCase()) {
+                case "insert":
+                    emulator.insert(allParams);
+                    mensajeExito = "✅ Nuevo registro añadido correctamente.";
+                    break;
+                
+                case "delete":
+                    int deleteRow = Integer.parseInt(allParams.get("numRegistro"));
+                    emulator.delete(deleteRow);
+                    mensajeExito = "✅ Registro " + deleteRow + " eliminado (borrado lógico).";
+                    break;
+
+                default:
+                    model.addAttribute("mensajeError", "❌ Acción no válida: " + accion);
+                    break;
+            }
+
+            if (!mensajeExito.isEmpty()) {
+                model.addAttribute("mensajeExito", mensajeExito);
+            }
+
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al ejecutar acción flexible: " + e.getMessage());
+        }
+
+        return gestionFlexible(rutaCompleta, model);
+    }
+    @GetMapping("/gestionXMLFLEX")
+    public String gestionXMLFlexible(@RequestParam String rutaCompleta, Model model) {
+        try {
+            XMLUtilFlexible util = new XMLUtilFlexible(rutaCompleta);
+
+            List<Map<String, String>> registros = util.readXMLAndCalculateSizes();
+            
+            model.addAttribute("columnas", util.getColumnNames());
+            model.addAttribute("tamanos", util.getCalculatedSizes());
+            model.addAttribute("registros", registros);
+            model.addAttribute("rutaCompleta", rutaCompleta);
+            model.addAttribute("nombreArchivo", new File(rutaCompleta).getName());
+            model.addAttribute("rutaPadre", new File(rutaCompleta).getParent());
+
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al cargar gestión XML flexible: " + e.getMessage());
+            String parentPath = new File(rutaCompleta).getParent();
+            return reloadInfo(parentPath, model, null, "Error: " + e.getMessage());
+        }
+        
+        return "gestionXMLFLEX"; 
+    }
+
+    
+    // ... en FileController.java ...
+
+    @PostMapping("/ejecutarXMLSqlFLEX")
+    public String ejecutarXMLSqlFlexible(
+            @RequestParam String rutaCompleta,
+            @RequestParam String accion,
+            @RequestParam Map<String, String> allParams,
+            Model model) {
+        
+        try {
+            XMLUtilFlexible util = new XMLUtilFlexible(rutaCompleta);
+            String mensajeExito = "";
+
+            switch (accion.toLowerCase()) {
+                case "insert":
+                    util.insert(allParams);
+                    mensajeExito = "✅ Nuevo registro añadido al XML.";
+                    break;
+                case "delete":
+                    int deleteRow = Integer.parseInt(allParams.get("numRegistro"));
+                    util.delete(deleteRow);
+                    mensajeExito = "✅ Registro " + deleteRow + " eliminado del XML.";
+                    break;
+                default:
+                    model.addAttribute("mensajeError", "❌ Acción no válida: " + accion);
+                    break;
+            }
+
+            if (!mensajeExito.isEmpty()) {
+                model.addAttribute("mensajeExito", mensajeExito);
+            }
+        } catch (Exception e) {
+            model.addAttribute("mensajeError", "❌ Error al ejecutar acción XML flexible: " + e.getMessage());
+        }
+
+        return gestionXMLFlexible(rutaCompleta, model);
     }
 }
