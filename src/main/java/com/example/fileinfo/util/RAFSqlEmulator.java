@@ -33,9 +33,11 @@ public class RAFSqlEmulator {
         File file = new File(filePath);
         if (!file.exists()) {
             try {
-                file.createNewFile();
+                boolean created = file.createNewFile();
+                if (created) {
+                    System.out.println("Archivo creado: " + filePath);
+                }
             } catch (IOException e) {
-                // En una app real se debe registrar el error. Aquí solo se imprime.
                 System.err.println("No se pudo crear el archivo: " + e.getMessage());
             }
         }

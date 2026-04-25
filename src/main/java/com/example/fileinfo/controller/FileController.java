@@ -148,12 +148,8 @@ public class FileController {
             mensajeError = "⚠️ El archivo XML ya existe: " + nuevoArchivo.getAbsolutePath();
         } else {
             try {
-                // Se necesita un constructor dummy de XMLUtil o asegurar que el constructor
-                // que usa la ruta hace el trabajo de inicialización. Asumiendo la lógica
-                // de XMLUtil, esto debería funcionar:
-                XMLUtil xmlUtil = new XMLUtil(nuevoArchivo.getAbsolutePath());
-                // El constructor de XMLUtil asegura la creación del archivo vacío con la
-                // estructura <catalogo>
+                // El constructor de XMLUtil asegura la creación del archivo vacío con la estructura <catalogo>
+                new XMLUtil(nuevoArchivo.getAbsolutePath());
                 mensajeExito = "✅ Archivo XML (Catálogo) creado correctamente: " + nuevoArchivo.getName();
             } catch (Exception e) {
                 mensajeError = "❌ Error al crear el archivo XML: " + e.getMessage();
@@ -225,6 +221,7 @@ public class FileController {
             mensajeError = "⚠️ El archivo ya existe: " + nuevoArchivo.getAbsolutePath();
         } else {
             try (RandomAccessFile raf = new RandomAccessFile(nuevoArchivo, "rw")) {
+                // Solo abrimos y cerramos para asegurar la creación física
                 mensajeExito = "✅ Archivo de Acceso Aleatorio creado correctamente: " + nuevoArchivo.getName();
             } catch (IOException e) {
                 mensajeError = "❌ Error al crear el archivo de Acceso Aleatorio: " + e.getMessage();
