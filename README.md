@@ -1,87 +1,60 @@
-# 📁 Proyecto Ficheros - Java File Management System
+# 📁 Proyecto Ficheros — Sistema de gestión de archivos en Java
 
 [![Java](https://img.shields.io/badge/Java-17%2B-orange?style=flat-square&logo=java)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen?style=flat-square&logo=spring-boot)](https://spring.io/projects/spring-boot)
 [![Thymeleaf](https://img.shields.io/badge/Thymeleaf-3.x-blue?style=flat-square)](https://www.thymeleaf.org/)
 
-Este proyecto es una aplicación web robusta desarrollada con **Spring Boot** para la gestión avanzada de archivos y sistemas de persistencia no relacionales (RAF y XML) en Java.
+[Español](#español) · [English](#english)
 
 ---
 
-## 🇪🇸 Índice (Español)
-1. [Descripción General](#descripción-general)
-2. [Características Principales](#características-principales)
-3. [Tecnologías Utilizadas](#tecnologías-utilizadas)
-4. [Estructura del Proyecto](#estructura-del-proyecto)
-5. [Instalación y Ejecución](#instalación-y-ejecución)
+## Español
 
----
+### Índice
 
-## 🇺🇸 Index (English)
-1. [General Description](#general-description)
-2. [Key Features](#key-features)
-3. [Technologies Used](#technologies-used)
-4. [Project Structure](#project-structure)
-5. [Installation and Running](#installation-and-running)
+- [Descripción](#descripción)
+- [Características](#características)
+- [Tecnologías](#tecnologías)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Instalación y ejecución](#instalación-y-ejecución)
+- [Licencia](#licencia)
 
----
+### Descripción
 
-## 🇪🇸 Descripción General
-**Proyecto Ficheros** es una herramienta educativa y funcional diseñada para explorar, editar y gestionar archivos en el sistema local a través de una interfaz web moderna. Su núcleo se centra en la simulación de operaciones SQL sobre archivos de **Acceso Aleatorio (RAF)** y archivos **XML**, permitiendo tratar datos estructurados sin necesidad de una base de datos tradicional.
+**Proyecto Ficheros** es una aplicación web desarrollada con **Spring Boot** para la gestión avanzada de archivos y sistemas de persistencia no relacionales (**RAF** y **XML**) en Java.
 
-## 🇺🇸 General Description
-**Project Files** is an educational and functional tool designed to explore, edit, and manage local system files through a modern web interface. Its core focuses on simulating SQL operations over **Random Access Files (RAF)** and **XML** files, allowing structured data handling without the need for a traditional database.
+Es una herramienta educativa y funcional para explorar, editar y gestionar archivos del sistema local desde una interfaz web moderna. Su núcleo simula operaciones SQL sobre archivos de **Acceso Aleatorio (RAF)** y archivos **XML**, lo que permite tratar datos estructurados sin una base de datos tradicional.
 
----
+### Características
 
-## 🇪🇸 Características Principales
-- **Explorador de Archivos**: Navegación completa por el sistema de archivos local, creación y eliminación de ficheros y directorios.
-- **Editor de Texto**: Edición directa de archivos de texto plano desde el navegador.
-- **Emulador SQL sobre RAF**: Permite realizar `SELECT`, `UPDATE` y `DELETE` sobre archivos binarios con estructura de registro fija (ID, Nombre, Edad).
-- **Gestión XML Avanzada**:
-    - Serialización y deserialización con **JAXB**.
-    - Manipulación de nodos con **DOM**.
-    - Emulación de operaciones SQL sobre archivos XML.
-- **Conversor de Codificación**: Herramienta para transformar archivos entre diferentes encodings (UTF-8, ASCII, UTF-16, ISO-8859-1).
-- **Soporte de Esquemas Flexibles**: Versiones adaptativas que permiten trabajar con estructuras de datos dinámicas en RAF y XML.
-- **Exportación/Importación**: Funcionalidad para exportar el listado de archivos o registros RAF a formato XML.
+- **Explorador de archivos**: navegación completa por el sistema de archivos local, con creación y eliminación de ficheros y directorios.
+- **Editor de texto**: edición directa de archivos de texto plano desde el navegador.
+- **Emulador SQL sobre RAF**: permite ejecutar `SELECT`, `UPDATE` y `DELETE` sobre archivos binarios con estructura de registro fija (ID, Nombre, Edad).
+- **Gestión XML avanzada**:
+  - Serialización y deserialización con **JAXB**.
+  - Manipulación de nodos con **DOM**.
+  - Emulación de operaciones SQL sobre archivos XML.
+- **Conversor de codificación**: transforma archivos entre UTF-8, ASCII, UTF-16 e ISO-8859-1.
+- **Esquemas flexibles**: versiones adaptativas para trabajar con estructuras de datos dinámicas en RAF y XML.
+- **Exportación e importación**: exporta el listado de archivos o los registros RAF a formato XML.
 
-## 🇺🇸 Key Features
-- **File Explorer**: Full navigation through the local file system, including creation and deletion of files and directories.
-- **Text Editor**: Direct editing of plain text files from the browser.
-- **SQL Emulator over RAF**: Perform `SELECT`, `UPDATE`, and `DELETE` operations on binary files with a fixed record structure (ID, Name, Age).
-- **Advanced XML Management**:
-    - Serialization and deserialization using **JAXB**.
-    - Node manipulation with **DOM**.
-    - SQL operation emulation over XML files.
-- **Encoding Converter**: Tool to transform files between different encodings (UTF-8, ASCII, UTF-16, ISO-8859-1).
-- **Flexible Schema Support**: Adaptive versions that allow working with dynamic data structures in both RAF and XML.
-- **Export/Import**: Functionality to export file listings or RAF records to XML format.
+### Tecnologías
 
----
+| Capa | Tecnología |
+|---|---|
+| Lenguaje | Java 17+ |
+| Framework | Spring Boot 3 (Spring MVC) |
+| Motor de plantillas | Thymeleaf |
+| Persistencia | Java File I/O, `RandomAccessFile`, JAXB, DOM |
+| Dependencias | Maven |
 
-## 🇪🇸 Tecnologías Utilizadas
-- **Lenguaje**: Java 17+
-- **Framework**: Spring Boot 3 (Spring MVC)
-- **Motor de Plantillas**: Thymeleaf
-- **Persistencia**: Java File I/O, RandomAccessFile, JAXB, DOM (XML)
-- **Gestión de Dependencias**: Maven
+### Estructura del proyecto
 
-## 🇺🇸 Technologies Used
-- **Language**: Java 17+
-- **Framework**: Spring Boot 3 (Spring MVC)
-- **Template Engine**: Thymeleaf
-- **Persistence**: Java File I/O, RandomAccessFile, JAXB, DOM (XML)
-- **Dependency Management**: Maven
-
----
-
-## 🇪🇸 Estructura del Proyecto
 ```text
 src/main/java/com/example/fileinfo/
 ├── Aplicacion.java         # Punto de entrada de Spring Boot
 ├── controller/
-│   └── FileController.java # Lógica de endpoints y control de flujo
+│   └── FileController.java # Endpoints y control de flujo
 ├── model/
 │   ├── FileInfo.java       # POJO para metadatos de archivos
 │   ├── Schema.java         # Definición de estructuras dinámicas
@@ -92,15 +65,83 @@ src/main/java/com/example/fileinfo/
     ├── ...Flexible.java    # Versiones para esquemas dinámicos
 ```
 
-## 🇺🇸 Project Structure
+### Instalación y ejecución
+
+1. **Requisitos**: JDK 17 o superior y Maven instalado.
+2. **Descarga** el código fuente.
+3. **Compila**:
+
+   ```bash
+   mvn clean install
+   ```
+
+4. **Ejecuta**:
+
+   ```bash
+   mvn spring-boot:run
+   ```
+
+5. **Accede** desde el navegador a [http://localhost:8080](http://localhost:8080).
+
+> [!NOTE]
+> Este proyecto se desarrolló como parte de un estudio profundo sobre el manejo de flujos de datos (*streams*) y persistencia aleatoria en Java.
+
+### Licencia
+
+**MIT License** © 2025 TeamProjectsDev. Consulta [LICENSE](LICENSE).
+
+---
+
+## English
+
+### Table of contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Installation and running](#installation-and-running)
+- [License](#license)
+
+### Overview
+
+**Project Files** is a web application built with **Spring Boot** for advanced file management and non-relational persistence systems (**RAF** and **XML**) in Java.
+
+It is an educational yet functional tool to explore, edit and manage local system files through a modern web interface. Its core simulates SQL operations over **Random Access Files (RAF)** and **XML** files, so structured data can be handled without a traditional database.
+
+### Features
+
+- **File explorer**: full navigation of the local file system, including creating and deleting files and directories.
+- **Text editor**: edit plain text files directly from the browser.
+- **SQL emulator over RAF**: run `SELECT`, `UPDATE` and `DELETE` on binary files with a fixed record structure (ID, Name, Age).
+- **Advanced XML management**:
+  - Serialization and deserialization with **JAXB**.
+  - Node manipulation with **DOM**.
+  - SQL operation emulation over XML files.
+- **Encoding converter**: transform files between UTF-8, ASCII, UTF-16 and ISO-8859-1.
+- **Flexible schemas**: adaptive versions for dynamic data structures in both RAF and XML.
+- **Export and import**: export file listings or RAF records to XML.
+
+### Tech stack
+
+| Layer | Technology |
+|---|---|
+| Language | Java 17+ |
+| Framework | Spring Boot 3 (Spring MVC) |
+| Template engine | Thymeleaf |
+| Persistence | Java File I/O, `RandomAccessFile`, JAXB, DOM |
+| Dependencies | Maven |
+
+### Project structure
+
 ```text
 src/main/java/com/example/fileinfo/
 ├── Aplicacion.java         # Spring Boot entry point
 ├── controller/
-│   └── FileController.java # Endpoint logic and flow control
+│   └── FileController.java # Endpoints and flow control
 ├── model/
 │   ├── FileInfo.java       # POJO for file metadata
-│   ├── Schema.java         # Definition for dynamic structures
+│   ├── Schema.java         # Dynamic structure definitions
 │   └── ...
 └── util/
     ├── RAFSqlEmulator.java # SQL logic for binary files
@@ -108,23 +149,27 @@ src/main/java/com/example/fileinfo/
     ├── ...Flexible.java    # Versions for dynamic schemas
 ```
 
----
+### Installation and running
 
-## 🇪🇸 Instalación y Ejecución
-1. **Requisitos**: JDK 17 o superior y Maven instalado.
-2. **Clonar/Descargar**: Descarga el código fuente.
-3. **Compilar**: `mvn clean install`
-4. **Ejecutar**: `mvn spring-boot:run`
-5. **Acceso**: Abre un navegador y ve a `http://localhost:8080`
+1. **Requirements**: JDK 17 or later and Maven installed.
+2. **Download** the source code.
+3. **Compile**:
 
-## 🇺🇸 Installation and Running
-1. **Requirements**: JDK 17 or higher and Maven installed.
-2. **Clone/Download**: Download the source code.
-3. **Compile**: `mvn clean install`
-4. **Run**: `mvn spring-boot:run`
-5. **Access**: Open a browser and navigate to `http://localhost:8080`
+   ```bash
+   mvn clean install
+   ```
 
----
+4. **Run**:
+
+   ```bash
+   mvn spring-boot:run
+   ```
+
+5. **Open** [http://localhost:8080](http://localhost:8080) in your browser.
 
 > [!NOTE]
-> Este proyecto fue desarrollado como parte de un estudio profundo sobre el manejo de flujos de datos (Streams) y persistencia aleatoria en Java.
+> This project was built as part of a deep dive into data stream handling (*streams*) and random-access persistence in Java.
+
+### License
+
+**MIT License** © 2025 TeamProjectsDev. See [LICENSE](LICENSE).
